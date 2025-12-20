@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { storage } from "./storage";
 import OpenAI from "openai";
+import express from "express";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 // Initialize OpenAI client only if API key is available
@@ -9,7 +10,85 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
+const DBT_INSTRUCTIONS = `You are a compassionate DBT (Dialectical Behavior Therapy) diary card assistant. Your role is to help users complete their daily check-in through natural conversation.
+
+CONVERSATION STYLE:
+- Be warm, non-judgmental, and supportive
+- Use conversational language, not clinical terminology
+- Keep responses brief and focused
+- Ask clarifying questions when intensity is unclear
+
+EXTRACTION FOCUS:
+As the user speaks, listen for and extract:
+1. EMOTIONS: anxiety, anger, sadness, fear, shame, joy - with intensity (0-5 scale)
+2. URGES: self-harm, substance use, isolation - with intensity (0-5 scale)
+3. BEHAVIORS: What they did or didn't do
+4. SKILLS USED: Any DBT skills they mention (STOP, TIP, opposite action, DEAR MAN, wise mind, radical acceptance, distraction, self-soothe, etc.)
+5. CONTEXT: Prompting events and vulnerability factors
+
+RESPONSE PATTERNS:
+- When user mentions an emotion without intensity, gently ask: "That sounds difficult. On a scale of 0 to 5, how intense was that feeling?"
+- When user mentions using a skill, acknowledge it: "It sounds like you used [skill name]. That's great that you had that in your toolkit."
+- Keep the conversation flowing naturally while gathering diary card data.
+
+Remember: You're having a supportive conversation, not administering a clinical assessment.`;
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.post("/api/realtime/sdp", express.text({ type: ["application/sdp", "text/plain"] }), async (req, res) => {
+    try {
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: "OpenAI API key not configured" });
+      }
+
+      const sdpOffer = req.body;
+      
+      if (!sdpOffer || typeof sdpOffer !== "string") {
+        return res.status(400).json({ error: "SDP offer is required" });
+      }
+
+      const sessionConfig = JSON.stringify({
+        type: "realtime",
+        model: "gpt-4o-realtime-preview",
+        instructions: DBT_INSTRUCTIONS,
+        input_audio_transcription: {
+          model: "whisper-1",
+        },
+        audio: {
+          output: { voice: "coral" },
+        },
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.5,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 500,
+        },
+      });
+
+      const formData = new FormData();
+      formData.set("sdp", sdpOffer);
+      formData.set("session", sessionConfig);
+
+      const response = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("OpenAI Realtime API error:", response.status, errorText);
+        return res.status(response.status).json({ error: "Failed to create realtime session" });
+      }
+
+      const sdpAnswer = await response.text();
+      res.type("application/sdp").send(sdpAnswer);
+    } catch (error) {
+      console.error("Realtime SDP error:", error);
+      res.status(500).json({ error: "Failed to establish realtime connection" });
+    }
+  });
   // Diary entries API
   app.get("/api/diary-entries", async (req, res) => {
     try {

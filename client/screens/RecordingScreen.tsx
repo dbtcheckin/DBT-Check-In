@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import { useAudioRecorder, RecordingPresets, AudioModule } from "expo-audio";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -23,6 +22,7 @@ import { ThemedText } from "@/components/ThemedText";
 import LiveDiaryCard, { DiaryCardData } from "@/components/LiveDiaryCard";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
+import { useWebRTC } from "@/hooks/useWebRTC";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -78,24 +78,18 @@ export default function RecordingScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "connected" | "disconnected" | "error">("idle");
   const [cardData, setCardData] = useState<DiaryCardData>(emptyCardData);
   const [glowingFields, setGlowingFields] = useState<Set<string>>(new Set());
   const [uncertainFields, setUncertainFields] = useState<Set<string>>(new Set());
   
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const cardDataRef = useRef<DiaryCardData>(emptyCardData);
+
+  const { connectRealtime, disconnect, getTranscript, connectionError } = useWebRTC();
 
   const pulseOpacity = useSharedValue(1);
-
-  useEffect(() => {
-    const checkPermission = async () => {
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      setHasPermission(status.granted);
-    };
-    checkPermission();
-  }, []);
 
   useEffect(() => {
     if (isRecording) {
@@ -141,8 +135,8 @@ export default function RecordingScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const detectFields = (text: string) => {
-    const newData = { ...cardData };
+  const detectFields = useCallback((text: string) => {
+    const newData = { ...cardDataRef.current };
     const newGlow = new Set<string>();
     const newUncertain = new Set<string>();
 
@@ -184,31 +178,50 @@ export default function RecordingScreen() {
       newGlow.add("substances.alcohol");
     }
 
+    cardDataRef.current = newData;
     setCardData(newData);
     setGlowingFields(newGlow);
     setUncertainFields(newUncertain);
     setTimeout(() => setGlowingFields(new Set()), 800);
-  };
+  }, []);
+
+  const handleTranscript = useCallback((text: string, isFinal: boolean) => {
+    setTranscript(text);
+    detectFields(text);
+    
+    if (isFinal) {
+      console.log("Finalized transcript turn:", text);
+    }
+  }, [detectFields]);
+
+  const handleConnectionState = useCallback((state: "connecting" | "connected" | "disconnected" | "error") => {
+    setConnectionState(state);
+    if (state === "connected") {
+      setIsRecording(true);
+    } else if (state === "disconnected" || state === "error") {
+      if (isRecording) {
+        setIsRecording(false);
+      }
+    }
+  }, [isRecording]);
 
   const startRecording = async () => {
     try {
-      if (!hasPermission) {
-        const status = await AudioModule.requestRecordingPermissionsAsync();
-        if (!status.granted) {
-          return;
-        }
-        setHasPermission(true);
-      }
-
-      await audioRecorder.record();
-      setIsRecording(true);
-      setRecordingTime(0);
       setTranscript("");
       setCardData(emptyCardData);
+      cardDataRef.current = emptyCardData;
       setGlowingFields(new Set());
       setUncertainFields(new Set());
+      setRecordingTime(0);
+
+      const success = await connectRealtime(handleTranscript, handleConnectionState);
+      
+      if (!success) {
+        console.error("Failed to connect to realtime API");
+      }
     } catch (error) {
       console.error("Failed to start recording:", error);
+      setConnectionState("error");
     }
   };
 
@@ -216,50 +229,32 @@ export default function RecordingScreen() {
     try {
       setIsRecording(false);
       setIsProcessing(true);
+      
+      disconnect();
+      
+      const finalTranscript = transcript || getTranscript();
 
-      await audioRecorder.stop();
-      const uri = audioRecorder.uri;
+      if (finalTranscript && finalTranscript.trim()) {
+        try {
+          const extractedData = await apiRequest(
+            "POST",
+            "/api/extract-diary-data",
+            { transcript: finalTranscript }
+          );
 
-      if (uri) {
-        const response = await fetch(uri);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        
-        reader.onloadend = async () => {
-          const base64 = (reader.result as string).split(",")[1];
-          
-          try {
-            const transcriptionResult = await apiRequest(
-              "POST",
-              "/api/transcribe",
-              { audioBase64: base64 }
-            );
-            const transcriptText = transcriptionResult.text || "";
-            setTranscript(transcriptText);
-            detectFields(transcriptText);
-
-            const extractedData = await apiRequest(
-              "POST",
-              "/api/extract-diary-data",
-              { transcript: transcriptText }
-            );
-
-            setIsProcessing(false);
-            navigation.replace("AICompletion", {
-              transcript: transcriptText,
-              extractedData,
-            });
-          } catch (error) {
-            console.error("Processing error:", error);
-            setIsProcessing(false);
-            navigation.replace("AICompletion", {
-              transcript: "Unable to transcribe audio. Please try again.",
-              extractedData: { missing: ["all"] },
-            });
-          }
-        };
-        
-        reader.readAsDataURL(blob);
+          setIsProcessing(false);
+          navigation.replace("AICompletion", {
+            transcript: finalTranscript,
+            extractedData,
+          });
+        } catch (error) {
+          console.error("Processing error:", error);
+          setIsProcessing(false);
+          navigation.replace("AICompletion", {
+            transcript: finalTranscript,
+            extractedData: { missing: ["all"] },
+          });
+        }
       } else {
         setIsProcessing(false);
         navigation.replace("AICompletion", {
@@ -275,18 +270,16 @@ export default function RecordingScreen() {
 
   const handleCancel = async () => {
     if (isRecording) {
-      try {
-        await audioRecorder.stop();
-      } catch (e) {
-        // Ignore errors when cancelling
-      }
+      disconnect();
     }
     navigation.goBack();
   };
 
   const orbSize = 80 + audioLevel * 15;
 
-  if (hasPermission === false) {
+  const isWebPlatform = Platform.OS === "web";
+
+  if (!isWebPlatform) {
     return (
       <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
@@ -295,26 +288,37 @@ export default function RecordingScreen() {
           </Pressable>
         </View>
         <View style={styles.permissionContent}>
-          <Feather name="mic-off" size={64} color={theme.textTertiary} />
-          <ThemedText style={styles.permissionTitle}>Microphone Access Required</ThemedText>
+          <Feather name="globe" size={64} color={theme.textTertiary} />
+          <ThemedText style={styles.permissionTitle}>Web Platform Required</ThemedText>
           <ThemedText style={styles.permissionText}>
-            Please enable microphone access in your device settings to record voice diary entries.
+            Voice recording with real-time transcription requires the web version of the app. 
+            Please open this app in a web browser to use voice recording.
           </ThemedText>
-          {Platform.OS !== "web" && (
-            <Pressable
-              onPress={async () => {
-                try {
-                  const { Linking } = await import("react-native");
-                  await Linking.openSettings();
-                } catch (e) {
-                  // Settings not available
-                }
-              }}
-              style={styles.settingsButton}
-            >
-              <ThemedText style={styles.settingsButtonText}>Open Settings</ThemedText>
-            </Pressable>
-          )}
+        </View>
+      </View>
+    );
+  }
+
+  if (connectionState === "error" && connectionError) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+        <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.cancelButton}>
+            <ThemedText style={styles.cancelText}>Cancel</ThemedText>
+          </Pressable>
+        </View>
+        <View style={styles.permissionContent}>
+          <Feather name="alert-circle" size={64} color={theme.danger} />
+          <ThemedText style={styles.permissionTitle}>Connection Error</ThemedText>
+          <ThemedText style={styles.permissionText}>{connectionError}</ThemedText>
+          <Pressable
+            onPress={() => {
+              setConnectionState("idle");
+            }}
+            style={styles.settingsButton}
+          >
+            <ThemedText style={styles.settingsButtonText}>Try Again</ThemedText>
+          </Pressable>
         </View>
       </View>
     );
@@ -327,7 +331,9 @@ export default function RecordingScreen() {
           <ThemedText style={styles.cancelText}>Cancel</ThemedText>
         </Pressable>
         <View style={styles.timerContainer}>
-          <Animated.View style={[styles.recordingDot, pulseStyle]} />
+          {isRecording ? (
+            <Animated.View style={[styles.recordingDot, pulseStyle]} />
+          ) : null}
           <ThemedText style={styles.timerText} fontFamily="mono">
             {formatTime(recordingTime)}
           </ThemedText>
@@ -357,6 +363,7 @@ export default function RecordingScreen() {
             <Pressable
               onPress={isRecording ? stopRecording : startRecording}
               style={styles.orbContainer}
+              disabled={connectionState === "connecting"}
             >
               <View
                 style={[
@@ -372,6 +379,9 @@ export default function RecordingScreen() {
                 ]}
               />
             </Pressable>
+            {connectionState === "connecting" ? (
+              <ThemedText style={styles.connectingText}>Connecting...</ThemedText>
+            ) : null}
           </View>
 
           <View style={styles.transcriptSection}>
@@ -400,12 +410,19 @@ export default function RecordingScreen() {
           <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
             <Pressable
               onPress={isRecording ? stopRecording : startRecording}
+              disabled={connectionState === "connecting"}
               style={({ pressed }) => [
                 styles.doneButton,
                 pressed && styles.doneButtonPressed,
+                connectionState === "connecting" && styles.doneButtonDisabled,
               ]}
             >
-              {isRecording ? (
+              {connectionState === "connecting" ? (
+                <View style={styles.doneButtonContent}>
+                  <ActivityIndicator size="small" color={theme.text} />
+                  <ThemedText style={styles.doneButtonText}>Connecting...</ThemedText>
+                </View>
+              ) : isRecording ? (
                 <View style={styles.doneButtonContent}>
                   <View style={styles.stopSquare} />
                   <ThemedText style={styles.doneButtonText}>Done</ThemedText>
@@ -489,6 +506,11 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     shadowOffset: { width: 0, height: 0 },
   },
+  connectingText: {
+    marginTop: Spacing.sm,
+    color: Colors.dark.textSecondary,
+    fontSize: 12,
+  },
   transcriptSection: {
     flex: 1,
     backgroundColor: Colors.dark.backgroundDefault,
@@ -523,6 +545,9 @@ const styles = StyleSheet.create({
   },
   doneButtonPressed: {
     opacity: 0.8,
+  },
+  doneButtonDisabled: {
+    opacity: 0.6,
   },
   doneButtonContent: {
     flexDirection: "row",
