@@ -211,6 +211,63 @@ Respond with valid JSON only:
     }
   });
 
+  // OpenAI Realtime API ephemeral token endpoint
+  app.post("/api/realtime/token", async (req, res) => {
+    try {
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(400).json({ 
+          error: "OpenAI API key not configured",
+          message: "Please add your OPENAI_API_KEY to enable voice recording." 
+        });
+      }
+
+      const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-realtime-preview-2024-12-17",
+          voice: "alloy",
+          instructions: `You are a DBT diary card transcription assistant. Your job is to accurately transcribe what the user says about their day, emotions, urges, and coping skills they used. Listen carefully and transcribe their speech. Focus on:
+- Emotions they mention (anxiety, anger, sadness, joy, shame, fear)
+- Urges they experienced (self-harm, substance use, etc.)
+- DBT skills they used (STOP, TIP, opposite action, check facts, DEAR MAN, wise mind, radical acceptance, etc.)
+- Intensity levels they mention (on a scale of 0-5)
+Do not ask questions or provide advice. Simply listen and acknowledge what they share.`,
+          input_audio_transcription: {
+            model: "whisper-1"
+          },
+          turn_detection: {
+            type: "server_vad",
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 500
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("OpenAI Realtime session error:", errorData);
+        return res.status(response.status).json({ 
+          error: "Failed to create realtime session",
+          details: errorData 
+        });
+      }
+
+      const data = await response.json();
+      res.json({ 
+        client_secret: data.client_secret?.value || data.client_secret,
+        session_id: data.id
+      });
+    } catch (error) {
+      console.error("Realtime token error:", error);
+      res.status(500).json({ error: "Failed to create realtime session" });
+    }
+  });
+
   // Audio transcription endpoint
   app.post("/api/transcribe", async (req, res) => {
     try {
