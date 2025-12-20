@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
+import { WebSocket, WebSocketServer } from "ws";
 import { storage } from "./storage";
 import OpenAI from "openai";
 
@@ -300,6 +301,167 @@ Do not ask questions or provide advice. Simply listen and acknowledge what they 
   });
 
   const httpServer = createServer(app);
+
+  // WebSocket server for realtime audio proxy
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws/realtime" });
+
+  wss.on("connection", async (clientWs: WebSocket) => {
+    console.log("Client connected to realtime proxy");
+    
+    if (!process.env.OPENAI_API_KEY) {
+      clientWs.send(JSON.stringify({ 
+        type: "error", 
+        error: { message: "OpenAI API key not configured" } 
+      }));
+      clientWs.close();
+      return;
+    }
+
+    let openaiWs: WebSocket | null = null;
+
+    try {
+      const sessionResponse = await fetch("https://api.openai.com/v1/realtime/sessions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-transcribe",
+          input_audio_transcription: {
+            model: "gpt-4o-transcribe"
+          }
+        }),
+      });
+
+      if (!sessionResponse.ok) {
+        const errorText = await sessionResponse.text();
+        console.error("Failed to create session:", errorText);
+        clientWs.send(JSON.stringify({ 
+          type: "error", 
+          error: { message: "Failed to connect to voice service" } 
+        }));
+        clientWs.close();
+        return;
+      }
+
+      const sessionData = await sessionResponse.json();
+      const clientSecret = sessionData.client_secret?.value || sessionData.client_secret;
+
+      openaiWs = new WebSocket(
+        "wss://api.openai.com/v1/realtime?intent=transcription",
+        {
+          headers: {
+            "Authorization": `Bearer ${clientSecret}`,
+            "OpenAI-Beta": "realtime=v1"
+          }
+        }
+      );
+
+      openaiWs.on("open", () => {
+        console.log("Connected to OpenAI Realtime API (transcription mode)");
+        clientWs.send(JSON.stringify({ type: "session.ready" }));
+        
+        if (openaiWs) {
+          openaiWs.send(JSON.stringify({
+            type: "transcription_session.update",
+            session: {
+              audio: {
+                input: {
+                  format: {
+                    type: "audio/pcm",
+                    rate: 24000
+                  },
+                  transcription: {
+                    model: "gpt-4o-transcribe",
+                    language: "en"
+                  },
+                  turn_detection: {
+                    type: "server_vad",
+                    threshold: 0.5,
+                    prefix_padding_ms: 300,
+                    silence_duration_ms: 500
+                  }
+                }
+              }
+            }
+          }));
+        }
+      });
+
+      openaiWs.on("message", (data: Buffer | string) => {
+        const message = data.toString();
+        try {
+          const parsed = JSON.parse(message);
+          
+          const forwardTypes = [
+            "conversation.item.input_audio_transcription.completed",
+            "conversation.item.input_audio_transcription.delta",
+            "conversation.item.input_audio_transcription.failed",
+            "transcription_session.created",
+            "transcription_session.updated",
+            "session.created",
+            "session.updated",
+            "input_audio_buffer.speech_started",
+            "input_audio_buffer.speech_stopped",
+            "input_audio_buffer.committed",
+            "error"
+          ];
+          
+          if (forwardTypes.includes(parsed.type)) {
+            clientWs.send(message);
+          }
+        } catch (e) {
+          console.error("Failed to parse OpenAI message:", e);
+        }
+      });
+
+      openaiWs.on("error", (error: Error) => {
+        console.error("OpenAI WebSocket error:", error);
+        clientWs.send(JSON.stringify({ 
+          type: "error", 
+          error: { message: "Voice service connection error" } 
+        }));
+      });
+
+      openaiWs.on("close", () => {
+        console.log("OpenAI WebSocket closed");
+        if (clientWs.readyState === WebSocket.OPEN) {
+          clientWs.close();
+        }
+      });
+
+      clientWs.on("message", (data: Buffer | string) => {
+        if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+          const message = typeof data === 'string' ? data : data.toString('utf8');
+          try {
+            const parsed = JSON.parse(message);
+            if (parsed.type === 'input_audio_buffer.append') {
+              console.log('Forwarding audio chunk, audio length:', parsed.audio?.length || 0);
+            }
+          } catch (e) {
+            // Not JSON, forward as-is
+          }
+          openaiWs.send(message);
+        }
+      });
+
+      clientWs.on("close", () => {
+        console.log("Client disconnected");
+        if (openaiWs && openaiWs.readyState === WebSocket.OPEN) {
+          openaiWs.close();
+        }
+      });
+
+    } catch (error) {
+      console.error("Realtime proxy error:", error);
+      clientWs.send(JSON.stringify({ 
+        type: "error", 
+        error: { message: "Failed to initialize voice service" } 
+      }));
+      clientWs.close();
+    }
+  });
 
   return httpServer;
 }

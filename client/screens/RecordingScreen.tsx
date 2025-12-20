@@ -92,6 +92,7 @@ export default function RecordingScreen() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const commitIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const pulseOpacity = useSharedValue(1);
 
@@ -206,6 +207,10 @@ export default function RecordingScreen() {
   }, []);
 
   const cleanupWebAudio = () => {
+    if (commitIntervalRef.current) {
+      clearInterval(commitIntervalRef.current);
+      commitIntervalRef.current = null;
+    }
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -242,103 +247,91 @@ export default function RecordingScreen() {
     return btoa(binary);
   };
 
+  const getWebSocketUrl = () => {
+    const apiUrl = getApiUrl();
+    const wsProtocol = apiUrl.startsWith("https") ? "wss" : "ws";
+    const host = apiUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    return `${wsProtocol}://${host}/ws/realtime`;
+  };
+
   const startWebRecording = async () => {
     setIsConnecting(true);
     setConnectionError(null);
     
     try {
-      const tokenResponse = await fetch(new URL("/api/realtime/token", getApiUrl()).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: 24000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
       });
+    } catch (micError) {
+      console.error("Microphone error:", micError);
+      setConnectionError("Microphone access denied");
+      setIsConnecting(false);
+      return;
+    }
 
-      if (!tokenResponse.ok) {
-        const error = await tokenResponse.json();
-        throw new Error(error.message || "Failed to connect to voice service");
-      }
-
-      const { client_secret } = await tokenResponse.json();
-
-      if (!client_secret) {
-        throw new Error("Connection failed - no session created");
-      }
-
-      const wsUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17`;
-      
-      wsRef.current = new WebSocket(wsUrl, [
-        "realtime",
-        `openai-insecure-api-key.${client_secret}`,
-      ]);
+    try {
+      const wsUrl = getWebSocketUrl();
+      wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = async () => {
-        wsRef.current?.send(JSON.stringify({
-          type: "session.update",
-          session: {
-            modalities: ["text", "audio"],
-            input_audio_format: "pcm16",
-            input_audio_transcription: {
-              model: "whisper-1"
-            },
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.5,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 800
-            }
-          }
-        }));
-
-        try {
-          mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              sampleRate: 24000,
-              channelCount: 1,
-              echoCancellation: true,
-              noiseSuppression: true,
-            }
-          });
-
-          audioContextRef.current = new AudioContext({ sampleRate: 24000 });
-          const source = audioContextRef.current.createMediaStreamSource(mediaStreamRef.current);
-          
-          processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
-          
-          processorRef.current.onaudioprocess = (e) => {
-            if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-            
-            const inputData = e.inputBuffer.getChannelData(0);
-            const pcm16 = floatTo16BitPCM(inputData);
-            const base64 = arrayBufferToBase64(pcm16.buffer as ArrayBuffer);
-            
-            wsRef.current.send(JSON.stringify({
-              type: "input_audio_buffer.append",
-              audio: base64
-            }));
-          };
-
-          source.connect(processorRef.current);
-          processorRef.current.connect(audioContextRef.current.destination);
-
-          setIsConnecting(false);
-          setIsRecording(true);
-          setRecordingTime(0);
-          setTranscript("");
-          setCardData(emptyCardData);
-          setGlowingFields(new Set());
-          setUncertainFields(new Set());
-        } catch (micError) {
-          console.error("Microphone error:", micError);
-          cleanupWebAudio();
-          setConnectionError("Microphone access denied");
-          setIsConnecting(false);
-        }
+        console.log("Connected to realtime proxy");
       };
 
       wsRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           
-          if (data.type === "conversation.item.input_audio_transcription.completed") {
+          if (data.type === "session.ready") {
+            audioContextRef.current = new AudioContext({ sampleRate: 24000 });
+            const source = audioContextRef.current.createMediaStreamSource(mediaStreamRef.current!);
+            
+            processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
+            
+            processorRef.current.onaudioprocess = (e) => {
+              if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+              
+              const inputData = e.inputBuffer.getChannelData(0);
+              const pcm16 = floatTo16BitPCM(inputData);
+              const base64 = arrayBufferToBase64(pcm16.buffer as ArrayBuffer);
+              
+              wsRef.current.send(JSON.stringify({
+                type: "input_audio_buffer.append",
+                audio: base64
+              }));
+            };
+
+            source.connect(processorRef.current);
+            processorRef.current.connect(audioContextRef.current.destination);
+
+            commitIntervalRef.current = setInterval(() => {
+              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({
+                  type: "input_audio_buffer.commit"
+                }));
+              }
+            }, 1500);
+
+            setIsConnecting(false);
+            setIsRecording(true);
+            setRecordingTime(0);
+            setTranscript("");
+            setCardData(emptyCardData);
+            setGlowingFields(new Set());
+            setUncertainFields(new Set());
+          } else if (data.type === "conversation.item.input_audio_transcription.delta") {
+            if (data.delta) {
+              setTranscript(prev => {
+                const newText = prev + data.delta;
+                detectFields(newText);
+                return newText;
+              });
+            }
+          } else if (data.type === "conversation.item.input_audio_transcription.completed") {
             if (data.transcript) {
               setTranscript(prev => {
                 const newTranscript = prev + (prev ? " " : "") + data.transcript;
@@ -346,8 +339,20 @@ export default function RecordingScreen() {
                 return newTranscript;
               });
             }
+          } else if (data.type === "input_audio_buffer.speech_started") {
+            console.log("Speech detected");
+          } else if (data.type === "input_audio_buffer.speech_stopped") {
+            console.log("Speech ended - committing buffer");
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({
+                type: "input_audio_buffer.commit"
+              }));
+            }
           } else if (data.type === "error") {
             console.error("Realtime API error:", data.error);
+            setConnectionError(data.error?.message || "Voice service error");
+            setIsConnecting(false);
+            cleanupWebAudio();
           }
         } catch (e) {
           console.error("Failed to parse message:", e);
@@ -370,6 +375,7 @@ export default function RecordingScreen() {
       console.error("Connection error:", error);
       setConnectionError(error instanceof Error ? error.message : "Connection failed");
       setIsConnecting(false);
+      cleanupWebAudio();
     }
   };
 
