@@ -4,6 +4,7 @@ import MainTabNavigator from "@/navigation/MainTabNavigator";
 import RecordingScreen from "@/screens/RecordingScreen";
 import AICompletionScreen from "@/screens/AICompletionScreen";
 import FinalReviewScreen from "@/screens/FinalReviewScreen";
+import SkillsLibraryScreen from "@/screens/SkillsLibraryScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type RootStackParamList = {
@@ -18,6 +19,7 @@ export type RootStackParamList = {
     entryId: string;
     diaryData: DiaryData;
   };
+  SkillsLibrary: undefined;
 };
 
 export type ExtractedData = {
@@ -73,6 +75,13 @@ export default function RootStackNavigator() {
         options={{
           presentation: "modal",
           headerTitle: "Entry Complete",
+        }}
+      />
+      <Stack.Screen
+        name="SkillsLibrary"
+        component={SkillsLibraryScreen}
+        options={{
+          headerTitle: "Skills Library",
         }}
       />
     </Stack.Navigator>

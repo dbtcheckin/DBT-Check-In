@@ -12,8 +12,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useMutation } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
-import { Colors, Spacing, BorderRadius, Fonts } from "@/constants/theme";
+import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest, queryClient } from "@/lib/query-client";
 import type { RootStackParamList, ExtractedData, DiaryData } from "@/navigation/RootStackNavigator";
 
@@ -22,10 +21,11 @@ type RouteProps = RouteProp<RootStackParamList, "AICompletion">;
 
 type Question = {
   id: string;
-  type: "scale" | "binary" | "confirm" | "quick_options";
+  type: "scale" | "binary" | "confirm" | "effectiveness";
   question: string;
+  subtext?: string;
   field: string;
-  options?: string[];
+  scale?: number;
 };
 
 export default function AICompletionScreen() {
@@ -68,16 +68,25 @@ export default function AICompletionScreen() {
       console.error("Failed to generate questions:", error);
       setQuestions([
         {
-          id: "fallback_emotions",
+          id: "sadness",
           type: "scale",
-          question: "How intense were your emotions today overall?",
-          field: "overall_emotion",
+          question: "Any sadness come up today?",
+          subtext: "You mentioned the day was rough",
+          field: "sadness",
+          scale: 5,
         },
         {
-          id: "fallback_urges",
-          type: "binary",
-          question: "Did you experience any difficult urges today?",
-          field: "had_urges",
+          id: "skill_helped",
+          type: "effectiveness",
+          question: "The skill you used - did it help?",
+          field: "skill_effectiveness",
+        },
+        {
+          id: "opposite_action",
+          type: "confirm",
+          question: "Going to the store when you wanted to isolate - that's Opposite Action.",
+          subtext: "Should I log that skill?",
+          field: "log_opposite_action",
         },
       ]);
     } finally {
@@ -147,6 +156,98 @@ export default function AICompletionScreen() {
     }
   };
 
+  const handleCancel = () => {
+    navigation.goBack();
+  };
+
+  const ScaleInput = ({ max = 5 }: { max?: number }) => (
+    <View style={styles.scaleContainer}>
+      {Array.from({ length: max + 1 }, (_, i) => (
+        <Pressable
+          key={i}
+          onPress={() => handleAnswer(i)}
+          style={({ pressed }) => [
+            styles.scaleButton,
+            pressed && styles.scaleButtonPressed,
+          ]}
+        >
+          <ThemedText style={styles.scaleText} fontFamily="mono">
+            {i}
+          </ThemedText>
+        </Pressable>
+      ))}
+    </View>
+  );
+
+  const EffectivenessInput = () => (
+    <View style={styles.effectivenessContainer}>
+      {[
+        { value: 5, label: "Yes, it helped" },
+        { value: 4, label: "Tried, didn't help much" },
+        { value: 3, label: "Tried but couldn't do it" },
+      ].map((option) => (
+        <Pressable
+          key={option.value}
+          onPress={() => handleAnswer(option.value)}
+          style={({ pressed }) => [
+            styles.effectivenessButton,
+            pressed && styles.effectivenessButtonPressed,
+          ]}
+        >
+          <ThemedText style={styles.effectivenessText}>
+            {option.label}
+          </ThemedText>
+        </Pressable>
+      ))}
+    </View>
+  );
+
+  const ConfirmInput = () => (
+    <View style={styles.confirmContainer}>
+      <Pressable
+        onPress={() => handleAnswer(true)}
+        style={({ pressed }) => [
+          styles.confirmButtonYes,
+          pressed && { opacity: 0.8 },
+        ]}
+      >
+        <ThemedText style={styles.confirmTextYes}>Yes, log it</ThemedText>
+      </Pressable>
+      <Pressable
+        onPress={() => handleAnswer(false)}
+        style={({ pressed }) => [
+          styles.confirmButtonNo,
+          pressed && { opacity: 0.8 },
+        ]}
+      >
+        <ThemedText style={styles.confirmTextNo}>Skip</ThemedText>
+      </Pressable>
+    </View>
+  );
+
+  const BinaryInput = () => (
+    <View style={styles.binaryContainer}>
+      <Pressable
+        onPress={() => handleAnswer(true)}
+        style={({ pressed }) => [
+          styles.binaryButton,
+          pressed && styles.binaryButtonPressed,
+        ]}
+      >
+        <ThemedText style={styles.binaryText}>Yes</ThemedText>
+      </Pressable>
+      <Pressable
+        onPress={() => handleAnswer(false)}
+        style={({ pressed }) => [
+          styles.binaryButton,
+          pressed && styles.binaryButtonPressed,
+        ]}
+      >
+        <ThemedText style={styles.binaryText}>No</ThemedText>
+      </Pressable>
+    </View>
+  );
+
   const renderQuestion = () => {
     if (isLoading) {
       return (
@@ -162,19 +263,17 @@ export default function AICompletionScreen() {
     if (questions.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>
+          <ThemedText style={styles.emptyText} fontFamily="serif">
             Your entry looks complete!
           </ThemedText>
           <Pressable
             onPress={completeEntry}
             style={({ pressed }) => [
-              styles.completeButton,
-              pressed && styles.completeButtonPressed,
+              styles.saveButton,
+              pressed && { opacity: 0.8 },
             ]}
           >
-            <ThemedText style={styles.completeButtonText}>
-              Save Entry
-            </ThemedText>
+            <ThemedText style={styles.saveButtonText}>Save Entry</ThemedText>
           </Pressable>
         </View>
       );
@@ -187,96 +286,44 @@ export default function AICompletionScreen() {
         <ThemedText style={styles.questionText} fontFamily="serif">
           {question.question}
         </ThemedText>
+        {question.subtext ? (
+          <ThemedText style={styles.subtextText}>
+            {question.subtext}
+          </ThemedText>
+        ) : null}
 
-        {question.type === "scale" && (
-          <View style={styles.scaleContainer}>
-            {[0, 1, 2, 3, 4, 5].map((num) => (
-              <Pressable
-                key={num}
-                onPress={() => handleAnswer(num)}
-                style={({ pressed }) => [
-                  styles.scaleButton,
-                  pressed && styles.scaleButtonPressed,
-                  answers[question.field] === num && styles.scaleButtonSelected,
-                ]}
-              >
-                <ThemedText
-                  style={[
-                    styles.scaleText,
-                    answers[question.field] === num && styles.scaleTextSelected,
-                  ]}
-                  fontFamily="mono"
-                >
-                  {num}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        {question.type === "binary" && (
-          <View style={styles.binaryContainer}>
-            {["No", "Yes"].map((option) => (
-              <Pressable
-                key={option}
-                onPress={() => handleAnswer(option)}
-                style={({ pressed }) => [
-                  styles.binaryButton,
-                  pressed && styles.binaryButtonPressed,
-                ]}
-              >
-                <ThemedText style={styles.binaryText}>{option}</ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        {question.type === "confirm" && (
-          <View style={styles.binaryContainer}>
-            {["No, skip it", "Yes, log it"].map((option) => (
-              <Pressable
-                key={option}
-                onPress={() => handleAnswer(option.includes("Yes"))}
-                style={({ pressed }) => [
-                  styles.binaryButton,
-                  pressed && styles.binaryButtonPressed,
-                ]}
-              >
-                <ThemedText style={styles.binaryText}>{option}</ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        {question.type === "quick_options" && question.options && (
-          <View style={styles.optionsContainer}>
-            {question.options.map((option) => (
-              <Pressable
-                key={option}
-                onPress={() => handleAnswer(option)}
-                style={({ pressed }) => [
-                  styles.optionButton,
-                  pressed && styles.optionButtonPressed,
-                ]}
-              >
-                <ThemedText style={styles.optionText}>{option}</ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        )}
+        <View style={styles.inputSection}>
+          {question.type === "scale" && <ScaleInput max={question.scale || 5} />}
+          {question.type === "effectiveness" && <EffectivenessInput />}
+          {question.type === "confirm" && <ConfirmInput />}
+          {question.type === "binary" && <BinaryInput />}
+        </View>
       </View>
     );
   };
 
+  const progress = questions.length > 0 ? ((currentStep + 1) / questions.length) * 100 : 0;
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <View style={styles.headerSpacer} />
-        <ThemedText style={styles.headerTitle}>Complete Your Card</ThemedText>
-        <Pressable onPress={handleSkip} style={styles.skipButton}>
-          <ThemedText style={styles.skipText}>Skip</ThemedText>
+        <Pressable onPress={handleCancel} style={styles.cancelButton}>
+          <ThemedText style={styles.cancelText}>Cancel</ThemedText>
         </Pressable>
+        {!isLoading && questions.length > 0 ? (
+          <ThemedText style={styles.stepText} fontFamily="mono">
+            {currentStep + 1} / {questions.length}
+          </ThemedText>
+        ) : null}
       </View>
+
+      {!isLoading && questions.length > 0 ? (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressBar, { width: `${progress}%` }]} />
+          </View>
+        </View>
+      ) : null}
 
       <ScrollView
         style={styles.content}
@@ -285,22 +332,13 @@ export default function AICompletionScreen() {
         {renderQuestion()}
       </ScrollView>
 
-      {!isLoading && questions.length > 0 && (
+      {!isLoading && questions.length > 0 ? (
         <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.lg }]}>
-          <View style={styles.progressDots}>
-            {questions.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.progressDot,
-                  index === currentStep && styles.progressDotActive,
-                  index < currentStep && styles.progressDotComplete,
-                ]}
-              />
-            ))}
-          </View>
+          <Pressable onPress={handleSkip}>
+            <ThemedText style={styles.skipText}>skip</ThemedText>
+          </Pressable>
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -314,21 +352,33 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: 10,
   },
-  headerSpacer: {
-    width: 50,
+  cancelButton: {
+    padding: Spacing.xs,
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "600",
+  cancelText: {
+    color: Colors.dark.textSecondary,
+    fontSize: 14,
   },
-  skipButton: {
-    padding: Spacing.sm,
-  },
-  skipText: {
+  stepText: {
     color: Colors.dark.textTertiary,
-    fontSize: 15,
+    fontSize: 12,
+  },
+  progressContainer: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  progressTrack: {
+    height: 2,
+    backgroundColor: Colors.dark.backgroundTertiary,
+    borderRadius: 1,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: Colors.dark.accent,
+    borderRadius: 1,
   },
   content: {
     flex: 1,
@@ -337,6 +387,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: Spacing.lg,
+    paddingBottom: 80,
   },
   loadingContainer: {
     alignItems: "center",
@@ -349,120 +400,130 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    fontSize: 20,
+    fontSize: 18,
     marginBottom: Spacing.xl,
+    color: Colors.dark.text,
   },
-  completeButton: {
+  saveButton: {
     backgroundColor: Colors.dark.accent,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.md,
   },
-  completeButtonPressed: {
-    opacity: 0.8,
-  },
-  completeButtonText: {
-    color: "#1a1d21",
-    fontSize: 17,
-    fontWeight: "600",
+  saveButtonText: {
+    color: Colors.dark.backgroundRoot,
+    fontSize: 15,
+    fontWeight: "500",
   },
   questionContainer: {
     alignItems: "center",
   },
   questionText: {
-    fontSize: 20,
+    fontSize: 22,
     textAlign: "center",
-    marginBottom: Spacing.xl,
-    lineHeight: 28,
+    lineHeight: 32,
     color: Colors.dark.text,
+    marginBottom: 8,
+  },
+  subtextText: {
+    fontSize: 13,
+    textAlign: "center",
+    color: Colors.dark.textTertiary,
+    marginBottom: 28,
+  },
+  inputSection: {
+    width: "100%",
+    marginTop: 20,
   },
   scaleContainer: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    justifyContent: "center",
+    gap: 10,
   },
   scaleButton: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.dark.backgroundDefault,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: Colors.dark.backgroundTertiary,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: Colors.dark.border,
   },
   scaleButtonPressed: {
     opacity: 0.8,
-    transform: [{ scale: 0.95 }],
-  },
-  scaleButtonSelected: {
-    borderColor: Colors.dark.accent,
-    backgroundColor: Colors.dark.backgroundSecondary,
   },
   scaleText: {
-    fontSize: 18,
+    fontSize: 17,
+    fontWeight: "500",
     color: Colors.dark.text,
   },
-  scaleTextSelected: {
-    color: Colors.dark.accent,
-    fontWeight: "600",
+  effectivenessContainer: {
+    gap: 10,
+  },
+  effectivenessButton: {
+    backgroundColor: Colors.dark.backgroundTertiary,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+  },
+  effectivenessButtonPressed: {
+    opacity: 0.8,
+  },
+  effectivenessText: {
+    fontSize: 15,
+    color: Colors.dark.text,
+    textAlign: "left",
+  },
+  confirmContainer: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  confirmButtonYes: {
+    flex: 1,
+    backgroundColor: Colors.dark.success,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  confirmTextYes: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: Colors.dark.backgroundRoot,
+  },
+  confirmButtonNo: {
+    flex: 1,
+    backgroundColor: Colors.dark.backgroundTertiary,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  confirmTextNo: {
+    fontSize: 15,
+    color: Colors.dark.text,
   },
   binaryContainer: {
-    width: "100%",
-    gap: Spacing.md,
+    flexDirection: "row",
+    gap: 10,
   },
   binaryButton: {
-    backgroundColor: Colors.dark.backgroundDefault,
-    paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    flex: 1,
+    backgroundColor: Colors.dark.backgroundTertiary,
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
   },
   binaryButtonPressed: {
-    backgroundColor: Colors.dark.backgroundSecondary,
-    opacity: 0.9,
+    opacity: 0.8,
   },
   binaryText: {
-    fontSize: 17,
-  },
-  optionsContainer: {
-    width: "100%",
-    gap: Spacing.sm,
-  },
-  optionButton: {
-    backgroundColor: Colors.dark.backgroundDefault,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-  },
-  optionButtonPressed: {
-    backgroundColor: Colors.dark.backgroundSecondary,
-  },
-  optionText: {
-    fontSize: 16,
-    textAlign: "center",
+    fontSize: 15,
+    color: Colors.dark.text,
   },
   footer: {
-    paddingHorizontal: Spacing.lg,
     alignItems: "center",
+    paddingTop: Spacing.md,
   },
-  progressDots: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.dark.backgroundSecondary,
-  },
-  progressDotActive: {
-    backgroundColor: Colors.dark.accent,
-    width: 24,
-  },
-  progressDotComplete: {
-    backgroundColor: Colors.dark.accent,
+  skipText: {
+    fontSize: 13,
+    color: Colors.dark.textTertiary,
   },
 });

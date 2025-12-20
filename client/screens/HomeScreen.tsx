@@ -7,11 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
-import { Colors, Spacing, BorderRadius, Fonts } from "@/constants/theme";
+import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { DiaryEntry } from "@shared/schema";
 
@@ -36,7 +34,7 @@ function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
 }
 
-const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -56,7 +54,6 @@ export default function HomeScreen() {
   const entryDates = new Set(entries.map((e) => e.date));
   const completedCount = entries.filter((e) => e.complete).length;
   const today = formatDate(new Date());
-  const todayEntry = entries.find((e) => e.date === today);
 
   return (
     <ScrollView
@@ -76,6 +73,10 @@ export default function HomeScreen() {
         })}
       </ThemedText>
 
+      <ThemedText style={styles.pageTitle} fontFamily="serif">
+        Diary
+      </ThemedText>
+
       <Pressable
         onPress={() => navigation.navigate("Recording")}
         style={({ pressed }) => [
@@ -83,27 +84,24 @@ export default function HomeScreen() {
           pressed && styles.recordCardPressed,
         ]}
       >
-        <LinearGradient
-          colors={[theme.accentGradientStart, "#7c3aed"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.recordCardGradient}
-        >
-          <View style={styles.recordIconContainer}>
-            <Feather name="mic" size={40} color="#ffffff" />
+        <View style={styles.recordCardContent}>
+          <View style={styles.recordOrbContainer}>
+            <View style={styles.recordOrbOuter}>
+              <View style={styles.recordOrbInner} />
+            </View>
           </View>
-          <ThemedText style={styles.recordTitle} type="title">
-            {todayEntry ? "Update Today's Entry" : "Record Today's Entry"}
-          </ThemedText>
-          <ThemedText style={styles.recordSubtitle} type="caption">
-            Speak freely - I'll help complete it
-          </ThemedText>
-        </LinearGradient>
+          <View style={styles.recordTextContainer}>
+            <ThemedText style={styles.recordTitle}>Record today</ThemedText>
+            <ThemedText style={styles.recordSubtitle}>
+              Watch your diary card fill as you speak
+            </ThemedText>
+          </View>
+        </View>
       </Pressable>
 
       <View style={styles.weekContainer}>
         <ThemedText style={styles.sectionTitle} type="caption">
-          This Week
+          This week
         </ThemedText>
         <View style={styles.weekRow}>
           {weekDates.map((date, index) => {
@@ -113,67 +111,74 @@ export default function HomeScreen() {
             
             return (
               <View key={dateStr} style={styles.dayColumn}>
-                <ThemedText
-                  style={[
-                    styles.dayLabel,
-                    isToday && styles.dayLabelToday,
-                  ]}
-                  type="small"
-                >
+                <ThemedText style={styles.dayLabel} type="small">
                   {dayLabels[index]}
                 </ThemedText>
                 <View
                   style={[
-                    styles.dayDot,
-                    isComplete && styles.dayDotComplete,
-                    isToday && !isComplete && styles.dayDotToday,
+                    styles.dayBox,
+                    isComplete && styles.dayBoxComplete,
+                    isToday && !isComplete && styles.dayBoxToday,
                   ]}
                 >
                   {isComplete ? (
-                    <Feather name="check" size={12} color="#ffffff" />
+                    <Feather name="check" size={14} color={theme.success} />
                   ) : null}
                 </View>
               </View>
             );
           })}
         </View>
-        <ThemedText style={styles.weekSummary} type="small" fontFamily="mono">
-          {completedCount}/7 days logged
-        </ThemedText>
       </View>
 
-      <View style={styles.quickActions}>
-        <Card
-          elevation={1}
-          style={styles.quickActionCard}
+      <View style={styles.cardsRow}>
+        <Pressable
+          style={styles.featureCard}
           onPress={() => navigation.navigate("Main", { screen: "WeeklyReviewTab" })}
         >
-          <View style={styles.quickActionIcon}>
-            <Feather name="bar-chart-2" size={24} color={theme.accent} />
-          </View>
-          <ThemedText style={styles.quickActionTitle} type="body">
-            Weekly Review
+          <ThemedText style={styles.featureCardTitle}>Week summary</ThemedText>
+          <ThemedText style={styles.featureCardSubtitle}>
+            {completedCount} of 7 days
           </ThemedText>
-          <ThemedText style={styles.quickActionSubtitle} type="small">
-            {completedCount}/7 days logged
-          </ThemedText>
-        </Card>
+        </Pressable>
 
-        <Card
-          elevation={1}
-          style={styles.quickActionCard}
+        <Pressable
+          style={styles.featureCard}
           onPress={() => navigation.navigate("Main", { screen: "SessionPrepTab" })}
         >
-          <View style={styles.quickActionIcon}>
-            <Feather name="clipboard" size={24} color={theme.accent} />
-          </View>
-          <ThemedText style={styles.quickActionTitle} type="body">
-            Session Prep
-          </ThemedText>
-          <ThemedText style={styles.quickActionSubtitle} type="small">
+          <ThemedText style={styles.featureCardTitle}>Session prep</ThemedText>
+          <ThemedText style={styles.featureCardSubtitle}>
             Ready for therapy
           </ThemedText>
-        </Card>
+        </Pressable>
+      </View>
+
+      <View style={styles.cardsRow}>
+        <Pressable
+          style={styles.featureCard}
+          onPress={() => navigation.navigate("SkillsLibrary")}
+        >
+          <ThemedText style={styles.featureCardTitle}>Skills library</ThemedText>
+          <ThemedText style={styles.featureCardSubtitle}>
+            32 DBT skills
+          </ThemedText>
+        </Pressable>
+
+        <Pressable
+          style={styles.featureCard}
+          onPress={() => {}}
+        >
+          <ThemedText style={styles.featureCardTitle}>Notifications</ThemedText>
+          <ThemedText style={styles.featureCardSubtitle}>
+            Reminders
+          </ThemedText>
+        </Pressable>
+      </View>
+
+      <View style={styles.insightBar}>
+        <ThemedText style={styles.insightText} fontFamily="serif">
+          STOP appeared three times this week when anger spiked. It seems to be helping with the conflicts.
+        </ThemedText>
       </View>
     </ScrollView>
   );
@@ -185,105 +190,139 @@ const styles = StyleSheet.create({
   },
   dateText: {
     color: Colors.dark.textTertiary,
+    marginBottom: Spacing.xs,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "400",
+    color: Colors.dark.text,
     marginBottom: Spacing.lg,
   },
   recordCard: {
+    backgroundColor: Colors.dark.backgroundDefault,
     borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-    marginBottom: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.dark.backgroundTertiary,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
   },
   recordCardPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
-  recordCardGradient: {
-    padding: Spacing.xl,
+  recordCardContent: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: Spacing.md,
   },
-  recordIconContainer: {
-    width: 80,
-    height: 80,
+  recordOrbContainer: {
+    width: 44,
+    height: 44,
     borderRadius: BorderRadius.full,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    backgroundColor: Colors.dark.accentMuted,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.md,
+  },
+  recordOrbOuter: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.dark.accentMuted,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  recordOrbInner: {
+    width: 10,
+    height: 10,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.dark.accent,
+  },
+  recordTextContainer: {
+    flex: 1,
   },
   recordTitle: {
-    color: "#ffffff",
+    fontSize: 16,
     fontWeight: "500",
-    marginBottom: Spacing.xs,
+    color: Colors.dark.text,
   },
   recordSubtitle: {
-    color: "rgba(255,255,255,0.7)",
+    fontSize: 13,
+    color: Colors.dark.textTertiary,
+    marginTop: 2,
   },
   weekContainer: {
-    backgroundColor: Colors.dark.backgroundDefault,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
     marginBottom: Spacing.lg,
   },
   sectionTitle: {
     color: Colors.dark.textTertiary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    fontSize: 12,
   },
   weekRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: Spacing.md,
+    gap: 6,
   },
   dayColumn: {
     alignItems: "center",
     flex: 1,
+    gap: 6,
   },
   dayLabel: {
     color: Colors.dark.textTertiary,
-    marginBottom: Spacing.xs,
+    fontSize: 11,
   },
-  dayLabelToday: {
-    color: Colors.dark.accent,
-    fontWeight: "600",
-  },
-  dayDot: {
-    width: 28,
-    height: 28,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.dark.backgroundSecondary,
+  dayBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.dark.border,
+    borderColor: Colors.dark.backgroundTertiary,
   },
-  dayDotComplete: {
-    backgroundColor: Colors.dark.accent,
+  dayBoxComplete: {
+    backgroundColor: Colors.dark.backgroundTertiary,
+    borderColor: Colors.dark.backgroundTertiary,
+  },
+  dayBoxToday: {
     borderColor: Colors.dark.accent,
+    borderWidth: 1,
   },
-  dayDotToday: {
-    borderColor: Colors.dark.accent,
-    borderWidth: 2,
-  },
-  weekSummary: {
-    color: Colors.dark.textSecondary,
-    textAlign: "center",
-  },
-  quickActions: {
+  cardsRow: {
     flexDirection: "row",
-    gap: Spacing.md,
+    gap: 10,
+    marginBottom: 10,
   },
-  quickActionCard: {
+  featureCard: {
     flex: 1,
-    padding: Spacing.lg,
+    backgroundColor: Colors.dark.backgroundDefault,
+    borderRadius: 10,
+    padding: Spacing.md,
   },
-  quickActionIcon: {
-    marginBottom: Spacing.sm,
-  },
-  quickActionTitle: {
+  featureCardTitle: {
+    fontSize: 14,
     fontWeight: "500",
-    marginBottom: Spacing.xs,
+    color: Colors.dark.text,
+    marginBottom: 3,
   },
-  quickActionSubtitle: {
+  featureCardSubtitle: {
+    fontSize: 12,
     color: Colors.dark.textTertiary,
+  },
+  insightBar: {
+    backgroundColor: Colors.dark.backgroundDefault,
+    borderRadius: 10,
+    padding: Spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.dark.accent,
+    marginTop: Spacing.sm,
+  },
+  insightText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: Colors.dark.textSecondary,
   },
 });

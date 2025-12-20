@@ -6,7 +6,6 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
 import { Colors, Spacing, BorderRadius, SkillDisplayNames, EmotionColors } from "@/constants/theme";
 import type { RootStackParamList, DiaryData } from "@/navigation/RootStackNavigator";
 
@@ -27,125 +26,103 @@ export default function FinalReviewScreen() {
   };
 
   const getEmotionColor = (emotion: string) => {
-    return EmotionColors[emotion as keyof typeof EmotionColors] || theme.textSecondary;
+    return EmotionColors[emotion as keyof typeof EmotionColors] || theme.accent;
   };
+
+  const hasEmotions = Object.keys(diaryData.emotions).length > 0;
+  const hasUrges = Object.keys(diaryData.urges).length > 0;
+  const hasSkills = diaryData.skills.length > 0;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+        <Pressable onPress={handleDone} style={styles.backButton}>
+          <Feather name="arrow-left" size={20} color={theme.textSecondary} />
+        </Pressable>
+        <ThemedText style={styles.headerTitle} fontFamily="serif">
+          Review
+        </ThemedText>
+        <View style={styles.headerSpacer} />
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
-          {
-            paddingTop: insets.top + Spacing.xl,
-            paddingBottom: insets.bottom + Spacing.xl,
-          },
+          { paddingBottom: insets.bottom + Spacing.xl },
         ]}
       >
-        <View style={styles.successIcon}>
-          <Feather name="check-circle" size={64} color={theme.accent} />
+        <View style={styles.capturedSection}>
+          <ThemedText style={styles.sectionLabel}>
+            Captured from your entry
+          </ThemedText>
+
+          {hasEmotions ? (
+            <View style={styles.dataGroup}>
+              <ThemedText style={styles.groupLabel}>Emotions</ThemedText>
+              <View style={styles.chipRow}>
+                {Object.entries(diaryData.emotions).map(([emotion, intensity]) => (
+                  <View key={emotion} style={styles.chip}>
+                    <View
+                      style={[
+                        styles.chipDot,
+                        { backgroundColor: getEmotionColor(emotion) },
+                      ]}
+                    />
+                    <ThemedText style={styles.chipLabel}>
+                      {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
+                    </ThemedText>
+                    <ThemedText style={styles.chipValue} fontFamily="mono">
+                      {intensity}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {hasUrges ? (
+            <View style={styles.dataGroup}>
+              <ThemedText style={styles.groupLabel}>Urges</ThemedText>
+              <View style={styles.chipRow}>
+                {Object.entries(diaryData.urges).map(([urge, intensity]) => (
+                  <View key={urge} style={styles.chip}>
+                    <ThemedText style={styles.chipLabel}>
+                      {urge.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </ThemedText>
+                    <ThemedText style={styles.chipValue} fontFamily="mono">
+                      {intensity}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {hasSkills ? (
+            <View style={styles.dataGroup}>
+              <ThemedText style={styles.groupLabel}>Skills Used</ThemedText>
+              <View style={styles.chipRow}>
+                {diaryData.skills.map((skill) => (
+                  <View key={skill} style={styles.skillChip}>
+                    <ThemedText style={styles.skillChipText}>
+                      {SkillDisplayNames[skill] || skill}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
         </View>
-
-        <ThemedText style={styles.title} type="headline">
-          Entry Complete
-        </ThemedText>
-        <ThemedText style={styles.subtitle} type="caption">
-          Your diary card has been saved
-        </ThemedText>
-
-        {Object.keys(diaryData.emotions).length > 0 && (
-          <Card elevation={1} style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="caption">
-              EMOTIONS
-            </ThemedText>
-            <View style={styles.emotionList}>
-              {Object.entries(diaryData.emotions).map(([emotion, intensity]) => (
-                <View key={emotion} style={styles.emotionItem}>
-                  <View
-                    style={[
-                      styles.emotionDot,
-                      { backgroundColor: getEmotionColor(emotion) },
-                    ]}
-                  />
-                  <ThemedText style={styles.emotionName}>
-                    {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
-                  </ThemedText>
-                  <ThemedText style={styles.emotionIntensity} fontFamily="mono">
-                    {intensity}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          </Card>
-        )}
-
-        {Object.keys(diaryData.urges).length > 0 && (
-          <Card elevation={1} style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="caption">
-              URGES
-            </ThemedText>
-            <View style={styles.urgeList}>
-              {Object.entries(diaryData.urges).map(([urge, intensity]) => (
-                <View key={urge} style={styles.urgeItem}>
-                  <ThemedText style={styles.urgeName}>
-                    {urge.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </ThemedText>
-                  <ThemedText style={styles.urgeIntensity} fontFamily="mono">
-                    {intensity}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-            {diaryData.actedOnUrges ? (
-              <ThemedText style={styles.actedOnUrges}>
-                Acted on urges today
-              </ThemedText>
-            ) : (
-              <ThemedText style={styles.notActedOnUrges}>
-                Did not act on urges
-              </ThemedText>
-            )}
-          </Card>
-        )}
-
-        {diaryData.skills.length > 0 && (
-          <Card elevation={1} style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="caption">
-              SKILLS USED
-            </ThemedText>
-            <View style={styles.skillList}>
-              {diaryData.skills.map((skill) => (
-                <View key={skill} style={styles.skillChip}>
-                  <ThemedText style={styles.skillText}>
-                    {SkillDisplayNames[skill] || skill}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          </Card>
-        )}
-
-        {diaryData.context.promptingEvents.length > 0 && (
-          <Card elevation={1} style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="caption">
-              CONTEXT
-            </ThemedText>
-            {diaryData.context.promptingEvents.map((event, index) => (
-              <ThemedText key={index} style={styles.contextItem} fontFamily="serif">
-                {event}
-              </ThemedText>
-            ))}
-          </Card>
-        )}
 
         <Pressable
           onPress={handleDone}
           style={({ pressed }) => [
-            styles.doneButton,
-            pressed && styles.doneButtonPressed,
+            styles.saveButton,
+            pressed && { opacity: 0.8 },
           ]}
         >
-          <ThemedText style={styles.doneButtonText}>Done</ThemedText>
+          <ThemedText style={styles.saveButtonText}>Save Entry</ThemedText>
         </Pressable>
       </ScrollView>
     </View>
@@ -156,117 +133,100 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    gap: 10,
+  },
+  backButton: {
+    padding: Spacing.xs,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 22,
+    fontWeight: "400",
+    color: Colors.dark.text,
+  },
+  headerSpacer: {
+    width: 28,
+  },
   scrollView: {
     flex: 1,
   },
   content: {
     paddingHorizontal: Spacing.lg,
-    alignItems: "center",
   },
-  successIcon: {
-    marginBottom: Spacing.lg,
+  capturedSection: {
+    backgroundColor: Colors.dark.backgroundDefault,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 14,
   },
-  title: {
-    textAlign: "center",
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    color: Colors.dark.textSecondary,
-    marginBottom: Spacing.xl,
-  },
-  section: {
-    width: "100%",
-    marginBottom: Spacing.md,
-    padding: Spacing.lg,
-  },
-  sectionTitle: {
+  sectionLabel: {
+    fontSize: 10,
     color: Colors.dark.textTertiary,
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: Spacing.md,
+    letterSpacing: 0.5,
+    marginBottom: 14,
   },
-  emotionList: {
-    gap: Spacing.sm,
+  dataGroup: {
+    marginBottom: 14,
   },
-  emotionItem: {
-    flexDirection: "row",
-    alignItems: "center",
+  groupLabel: {
+    fontSize: 11,
+    color: Colors.dark.textTertiary,
+    marginBottom: 8,
   },
-  emotionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: BorderRadius.full,
-    marginRight: Spacing.sm,
-  },
-  emotionName: {
-    flex: 1,
-  },
-  emotionIntensity: {
-    color: Colors.dark.textSecondary,
-    fontSize: 16,
-  },
-  urgeList: {
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  urgeItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  urgeName: {
-    flex: 1,
-  },
-  urgeIntensity: {
-    color: Colors.dark.textSecondary,
-    fontSize: 16,
-  },
-  actedOnUrges: {
-    color: Colors.dark.emotions.anger,
-    fontSize: 14,
-    marginTop: Spacing.xs,
-  },
-  notActedOnUrges: {
-    color: Colors.dark.emotions.joy,
-    fontSize: 14,
-    marginTop: Spacing.xs,
-  },
-  skillList: {
+  chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
+    gap: 6,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.dark.backgroundTertiary,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    gap: 6,
+  },
+  chipDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  chipLabel: {
+    fontSize: 12,
+    color: Colors.dark.text,
+  },
+  chipValue: {
+    fontSize: 12,
+    color: Colors.dark.textSecondary,
   },
   skillChip: {
-    backgroundColor: Colors.dark.backgroundSecondary,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.dark.accentMuted,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
     borderWidth: 1,
-    borderColor: Colors.dark.accent,
+    borderColor: Colors.dark.accentGlow,
   },
-  skillText: {
+  skillChipText: {
+    fontSize: 12,
     color: Colors.dark.accent,
-    fontSize: 14,
   },
-  contextItem: {
-    color: Colors.dark.textSecondary,
-    marginBottom: Spacing.xs,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  doneButton: {
+  saveButton: {
     backgroundColor: Colors.dark.accent,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl * 2,
-    borderRadius: BorderRadius.md,
-    marginTop: Spacing.lg,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
   },
-  doneButtonPressed: {
-    opacity: 0.8,
-  },
-  doneButtonText: {
-    color: "#1a1d21",
-    fontSize: 17,
-    fontWeight: "600",
+  saveButtonText: {
+    color: Colors.dark.backgroundRoot,
+    fontSize: 15,
+    fontWeight: "500",
   },
 });
