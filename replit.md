@@ -65,11 +65,17 @@ Preferred communication style: Simple, everyday language.
 - **Data channel**: Receives real-time transcript events (delta and completed) for live UI updates
 
 ### Mobile/Expo Services
-- **WebRTC**: Voice recording on web platform via navigator.mediaDevices.getUserMedia
+- **react-native-webrtc**: Voice recording and playback on iOS/Android via Expo dev build
+- **WebRTC (browser)**: Voice recording on web platform via navigator.mediaDevices.getUserMedia
 - **expo-av**: Audio/video playback (fallback for non-WebRTC scenarios)
 - **expo-haptics**: Tactile feedback
 - **expo-linear-gradient**: UI gradient effects
 - **AsyncStorage**: Local data persistence for user preferences
+
+### Platform-Specific Implementation
+- **useWebRTC.web.ts**: Browser WebRTC APIs for web platform
+- **useWebRTC.ts**: react-native-webrtc for iOS/Android via Expo dev build
+- **metro.config.js**: Custom resolver excludes react-native-webrtc from web bundles
 
 ### Build & Development
 - **Drizzle Kit**: Database migrations and schema management

@@ -1,28 +1,18 @@
 import { useRef, useCallback, useState } from "react";
 import { getApiUrl } from "@/lib/query-client";
-import {
-  RTCPeerConnection,
-  RTCSessionDescription,
-  mediaDevices,
-  MediaStream,
-  registerGlobals,
-} from "react-native-webrtc";
 
 type TranscriptCallback = (text: string, isFinal: boolean) => void;
 type ConnectionStateCallback = (state: "connecting" | "connected" | "disconnected" | "error") => void;
 
-registerGlobals();
-
 export function useWebRTC() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const transcriptRef = useRef<string>("");
   
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
   const connectRealtime = useCallback(async (
     onTranscript: TranscriptCallback,
@@ -37,30 +27,31 @@ export function useWebRTC() {
       });
       pcRef.current = pc;
 
-      pc.ontrack = (event: any) => {
-        console.log("Received remote track on mobile:", event.track?.kind);
-        if (event.streams && event.streams[0]) {
-          const stream = event.streams[0] as MediaStream;
-          remoteStreamRef.current = stream;
-          setRemoteStream(stream);
-          console.log("Remote stream set for audio playback");
-          
-          stream.getTracks().forEach((track: any) => {
-            track.enabled = true;
-            console.log(`Remote track: ${track.kind}, enabled: ${track.enabled}`);
-          });
-        }
-      };
+      if (typeof document !== "undefined") {
+        const audio = document.createElement("audio");
+        audio.autoplay = true;
+        audio.setAttribute("playsinline", "true");
+        audioRef.current = audio;
+        document.body.appendChild(audio);
+        
+        pc.ontrack = (e) => {
+          if (audio) {
+            audio.srcObject = e.streams[0];
+            audio.play().catch((err) => {
+              console.warn("Audio autoplay blocked:", err);
+            });
+          }
+        };
+      }
 
-      const localStream = await mediaDevices.getUserMedia({ audio: true });
-      localStreamRef.current = localStream as MediaStream;
-      
-      (localStream as MediaStream).getTracks().forEach((track: any) => {
-        pc.addTrack(track, localStream as MediaStream);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
       });
 
       const dc = pc.createDataChannel("oai-events");
-      dcRef.current = dc as unknown as RTCDataChannel;
+      dcRef.current = dc;
 
       transcriptRef.current = "";
 
@@ -76,13 +67,13 @@ export function useWebRTC() {
         onConnectionState("disconnected");
       };
 
-      dc.onerror = (error: any) => {
+      dc.onerror = (error) => {
         console.error("Data channel error:", error);
         setConnectionError("Connection error occurred");
         onConnectionState("error");
       };
 
-      dc.onmessage = (event: any) => {
+      dc.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
           
@@ -105,7 +96,7 @@ export function useWebRTC() {
 
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
-      } as any);
+      });
       await pc.setLocalDescription(offer);
 
       const baseUrl = getApiUrl();
@@ -126,8 +117,7 @@ export function useWebRTC() {
       const sdpAnswer = await sdpResponse.text();
       
       try {
-        const answerDesc = new RTCSessionDescription({ type: "answer", sdp: sdpAnswer });
-        await pc.setRemoteDescription(answerDesc);
+        await pc.setRemoteDescription({ type: "answer", sdp: sdpAnswer });
       } catch (sdpError) {
         console.error("Failed to set remote description:", sdpError);
         disconnect();
@@ -155,15 +145,9 @@ export function useWebRTC() {
   }, [sendEvent]);
 
   const disconnect = useCallback(() => {
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track: any) => track.stop());
-      localStreamRef.current = null;
-    }
-
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track: any) => track.stop());
-      remoteStreamRef.current = null;
-      setRemoteStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
 
     if (dcRef.current) {
@@ -174,6 +158,14 @@ export function useWebRTC() {
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
+    }
+
+    if (audioRef.current) {
+      audioRef.current.srcObject = null;
+      if (audioRef.current.parentNode) {
+        audioRef.current.parentNode.removeChild(audioRef.current);
+      }
+      audioRef.current = null;
     }
 
     transcriptRef.current = "";
@@ -192,6 +184,6 @@ export function useWebRTC() {
     getTranscript,
     isConnected,
     connectionError,
-    remoteStream,
+    remoteStream: null,
   };
 }
