@@ -1,12 +1,13 @@
 import { Text, type TextProps } from "react-native";
 
 import { useTheme } from "@/hooks/useTheme";
-import { Typography } from "@/constants/theme";
+import { Typography, Fonts, Colors } from "@/constants/theme";
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: "h1" | "h2" | "h3" | "h4" | "body" | "small" | "link";
+  type?: "headline" | "title" | "body" | "caption" | "data" | "small" | "link";
+  fontFamily?: "sans" | "serif" | "mono";
 };
 
 export function ThemedText({
@@ -14,6 +15,7 @@ export function ThemedText({
   lightColor,
   darkColor,
   type = "body",
+  fontFamily = "sans",
   ...rest
 }: ThemedTextProps) {
   const { theme, isDark } = useTheme();
@@ -36,26 +38,45 @@ export function ThemedText({
 
   const getTypeStyle = () => {
     switch (type) {
-      case "h1":
-        return Typography.h1;
-      case "h2":
-        return Typography.h2;
-      case "h3":
-        return Typography.h3;
-      case "h4":
-        return Typography.h4;
+      case "headline":
+        return Typography.headline;
+      case "title":
+        return Typography.title;
       case "body":
         return Typography.body;
+      case "caption":
+        return Typography.caption;
+      case "data":
+        return Typography.data;
       case "small":
         return Typography.small;
       case "link":
-        return Typography.link;
+        return Typography.body;
       default:
         return Typography.body;
     }
   };
 
+  const getFontFamily = () => {
+    if (!Fonts) return undefined;
+    switch (fontFamily) {
+      case "serif":
+        return Fonts.serif;
+      case "mono":
+        return Fonts.mono;
+      default:
+        return Fonts.sans;
+    }
+  };
+
   return (
-    <Text style={[{ color: getColor() }, getTypeStyle(), style]} {...rest} />
+    <Text
+      style={[
+        { color: getColor(), fontFamily: getFontFamily() },
+        getTypeStyle(),
+        style,
+      ]}
+      {...rest}
+    />
   );
 }

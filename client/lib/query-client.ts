@@ -23,11 +23,11 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
+export async function apiRequest<T = any>(
   method: string,
   route: string,
   data?: unknown | undefined,
-): Promise<Response> {
+): Promise<T> {
   const baseUrl = getApiUrl();
   const url = new URL(route, baseUrl);
 
@@ -39,7 +39,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -49,7 +49,23 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const baseUrl = getApiUrl();
-    const url = new URL(queryKey.join("/") as string, baseUrl);
+    
+    const [path, params] = queryKey;
+    let url: URL;
+    
+    if (typeof path === "string") {
+      url = new URL(path, baseUrl);
+      
+      if (params && typeof params === "object") {
+        Object.entries(params as Record<string, string>).forEach(([key, value]) => {
+          if (value !== undefined) {
+            url.searchParams.set(key, value);
+          }
+        });
+      }
+    } else {
+      url = new URL(queryKey.join("/") as string, baseUrl);
+    }
 
     const res = await fetch(url, {
       credentials: "include",
@@ -69,7 +85,7 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 5 * 60 * 1000,
       retry: false,
     },
     mutations: {

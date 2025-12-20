@@ -1,43 +1,69 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF";
-const tintColorDark = "#0A84FF";
-
 export const Colors = {
   light: {
-    text: "#11181C",
-    buttonText: "#FFFFFF",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-    link: "#007AFF",
-    backgroundRoot: "#FFFFFF", // Elevation 0
-    backgroundDefault: "#F2F2F2", // Elevation 1
-    backgroundSecondary: "#E6E6E6", // Elevation 2
-    backgroundTertiary: "#D9D9D9", // Elevation 3
+    text: "#ffffff",
+    textSecondary: "#9ca3af",
+    textTertiary: "#6b7280",
+    textDisabled: "#4b5563",
+    buttonText: "#ffffff",
+    tabIconDefault: "#6b7280",
+    tabIconSelected: "#c4a67c",
+    link: "#c4a67c",
+    backgroundRoot: "#1a1d21",
+    backgroundDefault: "#24282e",
+    backgroundSecondary: "#2f343b",
+    backgroundTertiary: "#3a4049",
+    accent: "#c4a67c",
+    accentSecondary: "#4f46e5",
+    accentGradientStart: "#4f46e5",
+    accentGradientEnd: "#818cf8",
+    border: "rgba(255,255,255,0.1)",
+    emotions: {
+      anxiety: "#f59e0b",
+      anger: "#ef4444",
+      sadness: "#6366f1",
+      fear: "#8b5cf6",
+      shame: "#ec4899",
+      joy: "#10b981",
+    },
   },
   dark: {
-    text: "#ECEDEE",
-    buttonText: "#FFFFFF",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    link: "#0A84FF",
-    backgroundRoot: "#1F2123", // Elevation 0
-    backgroundDefault: "#2A2C2E", // Elevation 1
-    backgroundSecondary: "#353739", // Elevation 2
-    backgroundTertiary: "#404244", // Elevation 3
+    text: "#ffffff",
+    textSecondary: "#9ca3af",
+    textTertiary: "#6b7280",
+    textDisabled: "#4b5563",
+    buttonText: "#ffffff",
+    tabIconDefault: "#6b7280",
+    tabIconSelected: "#c4a67c",
+    link: "#c4a67c",
+    backgroundRoot: "#1a1d21",
+    backgroundDefault: "#24282e",
+    backgroundSecondary: "#2f343b",
+    backgroundTertiary: "#3a4049",
+    accent: "#c4a67c",
+    accentSecondary: "#4f46e5",
+    accentGradientStart: "#4f46e5",
+    accentGradientEnd: "#818cf8",
+    border: "rgba(255,255,255,0.1)",
+    emotions: {
+      anxiety: "#f59e0b",
+      anger: "#ef4444",
+      sadness: "#6366f1",
+      fear: "#8b5cf6",
+      shame: "#ec4899",
+      joy: "#10b981",
+    },
   },
 };
 
 export const Spacing = {
   xs: 4,
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  "2xl": 24,
-  "3xl": 32,
-  "4xl": 40,
-  "5xl": 48,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  "2xl": 48,
   inputHeight: 48,
   buttonHeight: 52,
 };
@@ -45,7 +71,7 @@ export const Spacing = {
 export const BorderRadius = {
   xs: 8,
   sm: 12,
-  md: 18,
+  md: 16,
   lg: 24,
   xl: 30,
   "2xl": 40,
@@ -54,52 +80,37 @@ export const BorderRadius = {
 };
 
 export const Typography = {
-  h1: {
-    fontSize: 32,
-    lineHeight: 40,
-    fontWeight: "700" as const,
-  },
-  h2: {
+  headline: {
     fontSize: 28,
-    lineHeight: 36,
-    fontWeight: "700" as const,
+    fontWeight: "300" as const,
   },
-  h3: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: "600" as const,
-  },
-  h4: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: "600" as const,
+  title: {
+    fontSize: 22,
+    fontWeight: "400" as const,
   },
   body: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 17,
     fontWeight: "400" as const,
+  },
+  caption: {
+    fontSize: 14,
+    fontWeight: "400" as const,
+  },
+  data: {
+    fontSize: 16,
+    fontWeight: "500" as const,
   },
   small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "400" as const,
-  },
-  link: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 13,
     fontWeight: "400" as const,
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
   },
   default: {
@@ -111,8 +122,26 @@ export const Fonts = Platform.select({
   web: {
     sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
-    rounded:
-      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
+    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+export const EmotionColors = Colors.dark.emotions;
+
+export const SkillDisplayNames: Record<string, string> = {
+  stop: "STOP",
+  tip: "TIP",
+  tip_paced_breathing: "Paced Breathing",
+  tip_temperature: "Cold Water",
+  opposite_action: "Opposite Action",
+  check_facts: "Check the Facts",
+  dear_man: "DEAR MAN",
+  wise_mind: "Wise Mind",
+  radical_acceptance: "Radical Acceptance",
+  participate: "Participate",
+  distract: "Distract (ACCEPTS)",
+  self_soothe: "Self-Soothe",
+  improve: "IMPROVE",
+  pros_cons: "Pros and Cons",
+};
