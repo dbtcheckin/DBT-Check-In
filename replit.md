@@ -41,10 +41,11 @@ Preferred communication style: Simple, everyday language.
 - **Diary Entries**: Daily entries containing emotions (0-5 scale), urges (0-5 scale), skills used, behaviors, context (prompting events, vulnerabilities), and voice transcript
 
 ### Key Design Decisions
-1. **Voice-first approach**: Uses expo-audio for recording, with real-time transcript display and live diary card updates showing detected emotions/skills
+1. **Voice-first approach**: Uses OpenAI Realtime API via WebRTC for live voice-to-voice interaction on web, with real-time transcript display and live diary card updates showing detected emotions/skills
 2. **Two-phase completion**: Initial voice recording followed by AI-generated clarifying questions
 3. **Dark theme only**: Follows therapeutic "Quiet Strength" design with warm clay/sand accent colors (#c4a67c)
 4. **Path aliases**: Uses `@/` for client code and `@shared/` for shared code via babel module-resolver
+5. **WebRTC for web only**: Voice recording uses WebRTC with navigator.mediaDevices API - works on web browsers but not in Expo Go mobile app
 
 ## External Dependencies
 
@@ -53,12 +54,19 @@ Preferred communication style: Simple, everyday language.
 - **Connection**: Requires `DATABASE_URL` environment variable
 
 ### AI Services
-- **OpenAI API**: Used for analyzing voice transcripts and generating follow-up questions
+- **OpenAI Realtime API**: Used for live voice-to-voice interaction via WebRTC, real-time transcription, and DBT diary card data extraction
+- **OpenAI Chat API**: Used for generating follow-up questions and completing diary card entries
 - **Connection**: Requires `OPENAI_API_KEY` environment variable (gracefully handles missing key)
 
+### WebRTC Integration
+- **POST /api/realtime/sdp**: Backend endpoint that forwards SDP offers to OpenAI's Realtime API
+- **useWebRTC hook**: Manages peer connections, data channels, and transcript events
+- **Audio streaming**: Bidirectional audio via WebRTC tracks for voice input and AI voice responses
+- **Data channel**: Receives real-time transcript events (delta and completed) for live UI updates
+
 ### Mobile/Expo Services
-- **expo-audio**: Voice recording functionality
-- **expo-av**: Audio/video playback
+- **WebRTC**: Voice recording on web platform via navigator.mediaDevices.getUserMedia
+- **expo-av**: Audio/video playback (fallback for non-WebRTC scenarios)
 - **expo-haptics**: Tactile feedback
 - **expo-linear-gradient**: UI gradient effects
 - **AsyncStorage**: Local data persistence for user preferences
