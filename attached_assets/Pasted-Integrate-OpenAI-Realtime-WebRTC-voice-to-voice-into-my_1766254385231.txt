@@ -1,0 +1,36 @@
+Integrate OpenAI Realtime WebRTC voice-to-voice into my existing DBT Check-In React app.
+
+REFERENCE: In dbt_voice_diary_complete ILIKEBETTER.jsx, the app currently simulates live transcript during recording (demoTranscript loop) and calls detectFields(text) to fill cardData live. Replace the simulation with real OpenAI Realtime events.
+
+REQUIREMENTS
+- Must work on Desktop (web) AND Mobile (Expo).
+- Desktop: use browser WebRTC (RTCPeerConnection + getUserMedia).
+- Mobile: use Expo development build (not Expo Go) with react-native-webrtc; registerGlobals and use mediaDevices.getUserMedia.
+- Add a Replit backend endpoint POST /api/realtime/sdp:
+  - express.text parser for application/sdp
+  - create FormData with fields: sdp (raw SDP offer), session (JSON string)
+  - POST to https://api.openai.com/v1/realtime/calls with Authorization Bearer process.env.OPENAI_API_KEY
+  - return SDP answer text.
+- Client: create a function connectRealtime():
+  - create peer connection
+  - get mic stream, addTrack
+  - create data channel "oai-events"
+  - createOffer/setLocalDescription
+  - POST offer.sdp to /api/realtime/sdp and setRemoteDescription(answer)
+- During recording screen:
+  - Replace demoTranscript interval with listening for server events on the data channel.
+  - Update liveTranscript using transcription delta/completed events:
+    type: conversation.item.input_audio_transcription.delta => append delta
+    type: conversation.item.input_audio_transcription.completed => finalize turn
+  - After each transcript update, call detectFields(updatedTranscript) to live-fill the diary card (keep existing card UI).
+- Interruption behavior:
+  - If the user starts speaking while AI is speaking, send {"type":"response.cancel"} on the data channel.
+- Keep existing startRecording/stopRecording flows:
+  - startRecording() should: connectRealtime(), clear transcript/cardData, go to 'recording'
+  - stopRecording() should: close peer connection, then continue to completion screen as currently.
+- Keep changes minimal and concise. No big refactors.
+
+OUTPUT
+- Create/modify server files for the endpoint.
+- Update the existing DBTVoiceDiaryApp component to use realtime transcription events instead of demoTranscript.
+- Add clear notes on how to run for web and how to build a mobile dev client for Expo with react-native-webrtc.
