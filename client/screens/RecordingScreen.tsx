@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -22,7 +22,7 @@ import Animated, {
 import { ThemedText } from "@/components/ThemedText";
 import LiveDiaryCard, { DiaryCardData } from "@/components/LiveDiaryCard";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -76,23 +76,16 @@ export default function RecordingScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [cardData, setCardData] = useState<DiaryCardData>(emptyCardData);
   const [glowingFields, setGlowingFields] = useState<Set<string>>(new Set());
   const [uncertainFields, setUncertainFields] = useState<Set<string>>(new Set());
-  const [connectionError, setConnectionError] = useState<string | null>(null);
   
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
-  const commitIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const pulseOpacity = useSharedValue(1);
 
@@ -138,12 +131,6 @@ export default function RecordingScreen() {
     }
   }, [isRecording]);
 
-  useEffect(() => {
-    return () => {
-      cleanupWebAudio();
-    };
-  }, []);
-
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
   }));
@@ -154,247 +141,56 @@ export default function RecordingScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const detectFields = useCallback((text: string) => {
-    setCardData(prevData => {
-      const newData = { ...prevData };
-      const newGlow = new Set<string>();
-      const newUncertain = new Set<string>();
+  const detectFields = (text: string) => {
+    const newData = { ...cardData };
+    const newGlow = new Set<string>();
+    const newUncertain = new Set<string>();
 
-      Object.entries(DETECTION_PATTERNS.emotions).forEach(([emo, pattern]) => {
-        const match = text.match(pattern);
-        if (match && !newData.emotions[emo]) {
-          const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
-          const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/);
-          let val = numMatch ? parseInt(numMatch[1]) : 
-            DETECTION_PATTERNS.intensity.high.test(ctx) ? 4 :
-            DETECTION_PATTERNS.intensity.medium.test(ctx) ? 3 : null;
-          newData.emotions[emo] = { value: val, detected: true };
-          newGlow.add(`emotions.${emo}`);
-          if (val === null) newUncertain.add(`emotions.${emo}`);
-        }
-      });
-
-      Object.entries(DETECTION_PATTERNS.urges).forEach(([urge, pattern]) => {
-        const match = text.match(pattern);
-        if (match && !newData.urges[urge]) {
-          const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
-          const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/);
-          const val = numMatch ? parseInt(numMatch[1]) : null;
-          newData.urges[urge] = { value: val, detected: true };
-          newGlow.add(`urges.${urge}`);
-          if (val === null) newUncertain.add(`urges.${urge}`);
-        }
-      });
-
-      Object.entries(DETECTION_PATTERNS.skills).forEach(([skill, pattern]) => {
-        if (pattern.test(text) && !newData.skills[skill]) {
-          newData.skills[skill] = { used: true, detected: true };
-          newGlow.add(`skills.${skill}`);
-        }
-      });
-
-      if (/didn't (drink|have any)|no (alcohol|drinks)|sober/.test(text) && !newData.substances.alcohol) {
-        newData.substances.alcohol = { value: "none", detected: true };
-        newGlow.add("substances.alcohol");
+    Object.entries(DETECTION_PATTERNS.emotions).forEach(([emo, pattern]) => {
+      const match = text.match(pattern);
+      if (match && !newData.emotions[emo]) {
+        const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
+        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/);
+        let val = numMatch ? parseInt(numMatch[1]) : 
+          DETECTION_PATTERNS.intensity.high.test(ctx) ? 4 :
+          DETECTION_PATTERNS.intensity.medium.test(ctx) ? 3 : null;
+        newData.emotions[emo] = { value: val, detected: true };
+        newGlow.add(`emotions.${emo}`);
+        if (val === null) newUncertain.add(`emotions.${emo}`);
       }
-
-      setGlowingFields(newGlow);
-      setUncertainFields(newUncertain);
-      setTimeout(() => setGlowingFields(new Set()), 800);
-      
-      return newData;
     });
-  }, []);
 
-  const cleanupWebAudio = () => {
-    if (commitIntervalRef.current) {
-      clearInterval(commitIntervalRef.current);
-      commitIntervalRef.current = null;
+    Object.entries(DETECTION_PATTERNS.urges).forEach(([urge, pattern]) => {
+      const match = text.match(pattern);
+      if (match && !newData.urges[urge]) {
+        const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
+        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/);
+        const val = numMatch ? parseInt(numMatch[1]) : null;
+        newData.urges[urge] = { value: val, detected: true };
+        newGlow.add(`urges.${urge}`);
+        if (val === null) newUncertain.add(`urges.${urge}`);
+      }
+    });
+
+    Object.entries(DETECTION_PATTERNS.skills).forEach(([skill, pattern]) => {
+      if (pattern.test(text) && !newData.skills[skill]) {
+        newData.skills[skill] = { used: true, detected: true };
+        newGlow.add(`skills.${skill}`);
+      }
+    });
+
+    if (/didn't (drink|have any)|no (alcohol|drinks)|sober/.test(text) && !newData.substances.alcohol) {
+      newData.substances.alcohol = { value: "none", detected: true };
+      newGlow.add("substances.alcohol");
     }
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
-    }
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+
+    setCardData(newData);
+    setGlowingFields(newGlow);
+    setUncertainFields(newUncertain);
+    setTimeout(() => setGlowingFields(new Set()), 800);
   };
 
-  const floatTo16BitPCM = (float32Array: Float32Array): Int16Array => {
-    const int16Array = new Int16Array(float32Array.length);
-    for (let i = 0; i < float32Array.length; i++) {
-      const s = Math.max(-1, Math.min(1, float32Array[i]));
-      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-    }
-    return int16Array;
-  };
-
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-  };
-
-  const getWebSocketUrl = () => {
-    const apiUrl = getApiUrl();
-    const wsProtocol = apiUrl.startsWith("https") ? "wss" : "ws";
-    const host = apiUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
-    return `${wsProtocol}://${host}/ws/realtime`;
-  };
-
-  const startWebRecording = async () => {
-    setIsConnecting(true);
-    setConnectionError(null);
-    
-    try {
-      mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 24000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        }
-      });
-    } catch (micError) {
-      console.error("Microphone error:", micError);
-      setConnectionError("Microphone access denied");
-      setIsConnecting(false);
-      return;
-    }
-
-    try {
-      const wsUrl = getWebSocketUrl();
-      wsRef.current = new WebSocket(wsUrl);
-
-      wsRef.current.onopen = async () => {
-        console.log("Connected to realtime proxy");
-      };
-
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === "session.ready") {
-            audioContextRef.current = new AudioContext({ sampleRate: 24000 });
-            const source = audioContextRef.current.createMediaStreamSource(mediaStreamRef.current!);
-            
-            processorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
-            
-            processorRef.current.onaudioprocess = (e) => {
-              if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-              
-              const inputData = e.inputBuffer.getChannelData(0);
-              const pcm16 = floatTo16BitPCM(inputData);
-              const base64 = arrayBufferToBase64(pcm16.buffer as ArrayBuffer);
-              
-              wsRef.current.send(JSON.stringify({
-                type: "input_audio_buffer.append",
-                audio: base64
-              }));
-            };
-
-            source.connect(processorRef.current);
-            processorRef.current.connect(audioContextRef.current.destination);
-
-            commitIntervalRef.current = setInterval(() => {
-              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                wsRef.current.send(JSON.stringify({
-                  type: "input_audio_buffer.commit"
-                }));
-              }
-            }, 1500);
-
-            setIsConnecting(false);
-            setIsRecording(true);
-            setRecordingTime(0);
-            setTranscript("");
-            setCardData(emptyCardData);
-            setGlowingFields(new Set());
-            setUncertainFields(new Set());
-          } else if (data.type === "conversation.item.input_audio_transcription.delta") {
-            if (data.delta) {
-              setTranscript(prev => {
-                const newText = prev + data.delta;
-                detectFields(newText);
-                return newText;
-              });
-            }
-          } else if (data.type === "conversation.item.input_audio_transcription.completed") {
-            if (data.transcript) {
-              setTranscript(prev => {
-                const newTranscript = prev + (prev ? " " : "") + data.transcript;
-                detectFields(newTranscript);
-                return newTranscript;
-              });
-            }
-          } else if (data.type === "input_audio_buffer.speech_started") {
-            console.log("Speech detected");
-          } else if (data.type === "input_audio_buffer.speech_stopped") {
-            console.log("Speech ended - committing buffer");
-            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({
-                type: "input_audio_buffer.commit"
-              }));
-            }
-          } else if (data.type === "error") {
-            console.error("Realtime API error:", data.error);
-            setConnectionError(data.error?.message || "Voice service error");
-            setIsConnecting(false);
-            cleanupWebAudio();
-          }
-        } catch (e) {
-          console.error("Failed to parse message:", e);
-        }
-      };
-
-      wsRef.current.onerror = () => {
-        setConnectionError("Connection error");
-        setIsConnecting(false);
-        cleanupWebAudio();
-      };
-
-      wsRef.current.onclose = () => {
-        if (isRecording) {
-          setIsRecording(false);
-        }
-      };
-
-    } catch (error) {
-      console.error("Connection error:", error);
-      setConnectionError(error instanceof Error ? error.message : "Connection failed");
-      setIsConnecting(false);
-      cleanupWebAudio();
-    }
-  };
-
-  const stopWebRecording = async () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: "input_audio_buffer.commit"
-      }));
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    }
-
-    cleanupWebAudio();
-    setIsRecording(false);
-    
-    return transcript;
-  };
-
-  const startNativeRecording = async () => {
+  const startRecording = async () => {
     try {
       if (!hasPermission) {
         const status = await AudioModule.requestRecordingPermissionsAsync();
@@ -416,7 +212,7 @@ export default function RecordingScreen() {
     }
   };
 
-  const stopNativeRecording = async () => {
+  const stopRecording = async () => {
     try {
       setIsRecording(false);
       setIsProcessing(true);
@@ -429,87 +225,60 @@ export default function RecordingScreen() {
         const blob = await response.blob();
         const reader = new FileReader();
         
-        return new Promise<string>((resolve) => {
-          reader.onloadend = async () => {
-            const base64 = (reader.result as string).split(",")[1];
-            
-            try {
-              const transcriptionResult = await apiRequest(
-                "POST",
-                "/api/transcribe",
-                { audioBase64: base64 }
-              );
-              const transcriptText = transcriptionResult.text || "";
-              setTranscript(transcriptText);
-              detectFields(transcriptText);
-              resolve(transcriptText);
-            } catch (error) {
-              console.error("Transcription error:", error);
-              resolve("");
-            }
-          };
+        reader.onloadend = async () => {
+          const base64 = (reader.result as string).split(",")[1];
           
-          reader.readAsDataURL(blob);
+          try {
+            const transcriptionResult = await apiRequest(
+              "POST",
+              "/api/transcribe",
+              { audioBase64: base64 }
+            );
+            const transcriptText = transcriptionResult.text || "";
+            setTranscript(transcriptText);
+            detectFields(transcriptText);
+
+            const extractedData = await apiRequest(
+              "POST",
+              "/api/extract-diary-data",
+              { transcript: transcriptText }
+            );
+
+            setIsProcessing(false);
+            navigation.replace("AICompletion", {
+              transcript: transcriptText,
+              extractedData,
+            });
+          } catch (error) {
+            console.error("Processing error:", error);
+            setIsProcessing(false);
+            navigation.replace("AICompletion", {
+              transcript: "Unable to transcribe audio. Please try again.",
+              extractedData: { missing: ["all"] },
+            });
+          }
+        };
+        
+        reader.readAsDataURL(blob);
+      } else {
+        setIsProcessing(false);
+        navigation.replace("AICompletion", {
+          transcript: "No audio recorded. Please try again.",
+          extractedData: { missing: ["all"] },
         });
       }
-      return "";
     } catch (error) {
       console.error("Failed to stop recording:", error);
-      return "";
-    }
-  };
-
-  const startRecording = async () => {
-    if (Platform.OS === "web") {
-      await startWebRecording();
-    } else {
-      await startNativeRecording();
-    }
-  };
-
-  const stopRecording = async () => {
-    setIsProcessing(true);
-    
-    let finalTranscript = transcript;
-    
-    if (Platform.OS === "web") {
-      finalTranscript = await stopWebRecording();
-    } else {
-      finalTranscript = await stopNativeRecording();
-    }
-
-    try {
-      const extractedData = await apiRequest(
-        "POST",
-        "/api/extract-diary-data",
-        { transcript: finalTranscript }
-      );
-
       setIsProcessing(false);
-      navigation.replace("AICompletion", {
-        transcript: finalTranscript,
-        extractedData,
-      });
-    } catch (error) {
-      console.error("Processing error:", error);
-      setIsProcessing(false);
-      navigation.replace("AICompletion", {
-        transcript: finalTranscript || "Unable to transcribe audio. Please try again.",
-        extractedData: { missing: ["all"] },
-      });
     }
   };
 
   const handleCancel = async () => {
     if (isRecording) {
-      if (Platform.OS === "web") {
-        cleanupWebAudio();
-      } else {
-        try {
-          await audioRecorder.stop();
-        } catch (e) {
-          // Ignore
-        }
+      try {
+        await audioRecorder.stop();
+      } catch (e) {
+        // Ignore errors when cancelling
       }
     }
     navigation.goBack();
@@ -558,7 +327,7 @@ export default function RecordingScreen() {
           <ThemedText style={styles.cancelText}>Cancel</ThemedText>
         </Pressable>
         <View style={styles.timerContainer}>
-          <Animated.View style={[styles.recordingDot, pulseStyle, !isRecording && { opacity: 0 }]} />
+          <Animated.View style={[styles.recordingDot, pulseStyle]} />
           <ThemedText style={styles.timerText} fontFamily="mono">
             {formatTime(recordingTime)}
           </ThemedText>
@@ -571,21 +340,6 @@ export default function RecordingScreen() {
           <ThemedText style={styles.processingText}>
             Analyzing your entry...
           </ThemedText>
-        </View>
-      ) : isConnecting ? (
-        <View style={styles.processingContainer}>
-          <ActivityIndicator size="large" color={theme.accent} />
-          <ThemedText style={styles.processingText}>
-            Connecting to voice service...
-          </ThemedText>
-        </View>
-      ) : connectionError ? (
-        <View style={styles.processingContainer}>
-          <Feather name="alert-circle" size={48} color={theme.danger} />
-          <ThemedText style={styles.errorText}>{connectionError}</ThemedText>
-          <Pressable onPress={startRecording} style={styles.retryButton}>
-            <ThemedText style={styles.retryButtonText}>Try Again</ThemedText>
-          </Pressable>
         </View>
       ) : (
         <View style={styles.content}>
@@ -711,25 +465,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.md,
   },
   processingText: {
+    marginTop: Spacing.lg,
     color: Colors.dark.textSecondary,
-  },
-  errorText: {
-    color: Colors.dark.danger,
-    textAlign: "center",
-    paddingHorizontal: Spacing.xl,
-  },
-  retryButton: {
-    marginTop: Spacing.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    backgroundColor: Colors.dark.backgroundTertiary,
-    borderRadius: BorderRadius.md,
-  },
-  retryButtonText: {
-    color: Colors.dark.text,
   },
   cardScroll: {
     flex: 1,
