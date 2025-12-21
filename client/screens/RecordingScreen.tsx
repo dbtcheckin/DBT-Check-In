@@ -87,7 +87,7 @@ export default function RecordingScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const cardDataRef = useRef<DiaryCardData>(emptyCardData);
 
-  const { connectRealtime, disconnect, getTranscript, connectionError } = useWebRTC();
+  const { connectRealtime, disconnect, getTranscript, connectionError, isSupported } = useWebRTC();
 
   const pulseOpacity = useSharedValue(1);
 
@@ -279,7 +279,7 @@ export default function RecordingScreen() {
 
   const isWebPlatform = Platform.OS === "web";
 
-  if (!isWebPlatform) {
+  if (!isWebPlatform && !isSupported) {
     return (
       <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
@@ -288,11 +288,14 @@ export default function RecordingScreen() {
           </Pressable>
         </View>
         <View style={styles.permissionContent}>
-          <Feather name="globe" size={64} color={theme.textTertiary} />
-          <ThemedText style={styles.permissionTitle}>Web Platform Required</ThemedText>
+          <Feather name="smartphone" size={64} color={theme.textTertiary} />
+          <ThemedText style={styles.permissionTitle}>Development Build Required</ThemedText>
           <ThemedText style={styles.permissionText}>
-            Voice recording with real-time transcription requires the web version of the app. 
-            Please open this app in a web browser to use voice recording.
+            Voice recording requires the full app installation.{"\n\n"}
+            You're currently using Expo Go, which doesn't support voice features.{"\n\n"}
+            To use voice check-in:{"\n"}
+            - Use the web version at this URL, or{"\n"}
+            - Install the Development Build on your device
           </ThemedText>
         </View>
       </View>

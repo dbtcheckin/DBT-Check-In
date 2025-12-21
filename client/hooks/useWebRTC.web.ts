@@ -185,5 +185,6 @@ export function useWebRTC() {
     isConnected,
     connectionError,
     remoteStream: null,
+    isSupported: true,
   };
 }

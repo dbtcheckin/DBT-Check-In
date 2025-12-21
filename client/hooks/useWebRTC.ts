@@ -1,33 +1,46 @@
 import { useRef, useCallback, useState } from "react";
 import { getApiUrl } from "@/lib/query-client";
-import {
-  RTCPeerConnection,
-  RTCSessionDescription,
-  mediaDevices,
-  MediaStream,
-  registerGlobals,
-} from "react-native-webrtc";
 
 type TranscriptCallback = (text: string, isFinal: boolean) => void;
 type ConnectionStateCallback = (state: "connecting" | "connected" | "disconnected" | "error") => void;
 
-registerGlobals();
+let WebRTCModule: typeof import("react-native-webrtc") | null = null;
+let isWebRTCSupported = false;
+
+try {
+  WebRTCModule = require("react-native-webrtc");
+  if (WebRTCModule && WebRTCModule.RTCPeerConnection) {
+    WebRTCModule.registerGlobals();
+    isWebRTCSupported = true;
+  }
+} catch (e) {
+  console.log("react-native-webrtc not available - running in Expo Go or unsupported environment");
+  isWebRTCSupported = false;
+}
 
 export function useWebRTC() {
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const dcRef = useRef<RTCDataChannel | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const pcRef = useRef<any>(null);
+  const dcRef = useRef<any>(null);
+  const localStreamRef = useRef<any>(null);
+  const remoteStreamRef = useRef<any>(null);
   const transcriptRef = useRef<string>("");
   
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<any>(null);
 
   const connectRealtime = useCallback(async (
     onTranscript: TranscriptCallback,
     onConnectionState: ConnectionStateCallback
   ) => {
+    if (!isWebRTCSupported || !WebRTCModule) {
+      setConnectionError("WebRTC not available. Please use a Development Build instead of Expo Go.");
+      onConnectionState("error");
+      return false;
+    }
+
+    const { RTCPeerConnection, RTCSessionDescription, mediaDevices, MediaStream } = WebRTCModule;
+
     try {
       onConnectionState("connecting");
       setConnectionError(null);
@@ -37,10 +50,10 @@ export function useWebRTC() {
       });
       pcRef.current = pc;
 
-      pc.ontrack = (event: any) => {
+      (pc as any).ontrack = (event: any) => {
         console.log("Received remote track on mobile:", event.track?.kind);
         if (event.streams && event.streams[0]) {
-          const stream = event.streams[0] as MediaStream;
+          const stream = event.streams[0] as typeof MediaStream.prototype;
           remoteStreamRef.current = stream;
           setRemoteStream(stream);
           console.log("Remote stream set for audio playback");
@@ -53,36 +66,36 @@ export function useWebRTC() {
       };
 
       const localStream = await mediaDevices.getUserMedia({ audio: true });
-      localStreamRef.current = localStream as MediaStream;
+      localStreamRef.current = localStream;
       
-      (localStream as MediaStream).getTracks().forEach((track: any) => {
-        pc.addTrack(track, localStream as MediaStream);
+      localStream.getTracks().forEach((track: any) => {
+        pc.addTrack(track, localStream);
       });
 
       const dc = pc.createDataChannel("oai-events");
-      dcRef.current = dc as unknown as RTCDataChannel;
+      dcRef.current = dc;
 
       transcriptRef.current = "";
 
-      dc.onopen = () => {
+      (dc as any).onopen = () => {
         console.log("Data channel opened");
         setIsConnected(true);
         onConnectionState("connected");
       };
 
-      dc.onclose = () => {
+      (dc as any).onclose = () => {
         console.log("Data channel closed");
         setIsConnected(false);
         onConnectionState("disconnected");
       };
 
-      dc.onerror = (error: any) => {
+      (dc as any).onerror = (error: any) => {
         console.error("Data channel error:", error);
         setConnectionError("Connection error occurred");
         onConnectionState("error");
       };
 
-      dc.onmessage = (event: any) => {
+      (dc as any).onmessage = (event: any) => {
         try {
           const message = JSON.parse(event.data);
           
@@ -193,5 +206,6 @@ export function useWebRTC() {
     isConnected,
     connectionError,
     remoteStream,
+    isSupported: isWebRTCSupported,
   };
 }
