@@ -48,18 +48,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const sessionConfig = JSON.stringify({
         type: "realtime",
-        model: "gpt-4o-realtime-preview-2024-12-17",
+        model: "gpt-realtime-2025-08-28",
         instructions: DBT_INSTRUCTIONS,
-        voice: "coral",
-        input_audio_transcription: {
-          model: "gpt-4o-transcribe",
-        },
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500,
-        },
+        audio: {
+          output: { voice: "coral" }
+        }
       });
 
       const formData = new FormData();
