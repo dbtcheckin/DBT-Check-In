@@ -9,10 +9,16 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "f1ddc4a9-c33b-4d0c-abb8-b0eb8a61ab4e-00-2gnzijn8k25uc.janeway.replit.dev"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "f1ddc4a9-c33b-4d0c-abb8-b0eb8a61ab4e-00-2gnzijn8k25uc.janeway.replit.dev"
+      }
     }
   },
   "submit": {
