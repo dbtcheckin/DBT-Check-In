@@ -178,7 +178,7 @@ export function useWebRTC() {
               onMessage([...messagesRef.current]);
             }
             currentUserMessageRef.current = "";
-          } else if (message.type === "response.audio_transcript.delta") {
+          } else if (message.type === "response.audio_transcript.delta" || message.type === "response.output_audio_transcript.delta") {
             currentAiMessageRef.current += message.delta || "";
             
             if (onMessage) {
@@ -199,13 +199,15 @@ export function useWebRTC() {
               }
               onMessage([...messagesRef.current]);
             }
-          } else if (message.type === "response.audio_transcript.done") {
-            if (onMessage && currentAiMessageRef.current) {
+          } else if (message.type === "response.audio_transcript.done" || message.type === "response.output_audio_transcript.done") {
+            const finalText = message.transcript || currentAiMessageRef.current;
+            if (onMessage && finalText) {
               const existingAiMsgIndex = messagesRef.current.findIndex(
                 m => m.speaker === "ai" && !m.isFinal
               );
               
               if (existingAiMsgIndex >= 0) {
+                messagesRef.current[existingAiMsgIndex].text = finalText;
                 messagesRef.current[existingAiMsgIndex].isFinal = true;
               }
               onMessage([...messagesRef.current]);
