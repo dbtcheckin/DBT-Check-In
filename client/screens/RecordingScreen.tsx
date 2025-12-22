@@ -29,17 +29,18 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const DETECTION_PATTERNS = {
   emotions: {
-    anger: /\b(angry|furious|rage|mad|pissed|irritated|annoyed)\b/i,
-    anxiety: /\b(anxious|worried|nervous|panic|stressed|tense|scared)\b/i,
-    sadness: /\b(sad|depressed|down|hopeless|low|blue|crying)\b/i,
+    anger: /\b(angry|furious|rage|mad|pissed|irritated|annoyed|anger)\b/i,
+    anxiety: /\b(anxious|worried|nervous|panic|stressed|tense|scared|anxiety)\b/i,
+    sadness: /\b(sad|depressed|down|hopeless|low|blue|crying|sadness)\b/i,
     joy: /\b(happy|joy|good|great|excited|pleased|content)\b/i,
     shame: /\b(shame|ashamed|embarrassed|guilty|humiliated)\b/i,
     misery: /\b(misery|miserable|awful|terrible|suffering)\b/i,
+    fear: /\b(fear|afraid|frightened|terrified|fearful)\b/i,
   },
   urges: {
-    self_harm: /\b(cut|cutting|hurt myself|self.?harm|burn|scratch)\b/i,
+    self_harm: /\b(cut|cutting|hurt myself|self.?harm|burn|scratch|self-harm)\b/i,
     suicide: /\b(kill myself|suicide|suicidal|end it)\b/i,
-    drugs: /\b(drink|drunk|high|using|relapse|craving)\b/i,
+    drugs: /\b(drink|drunk|high|using|relapse|craving|drugs|substances)\b/i,
   },
   skills: {
     stop: /\bSTOP\b|stopped (myself|before)/i,
@@ -52,12 +53,15 @@ const DETECTION_PATTERNS = {
     distract: /\b(distract|distraction|ACCEPTS)\b/i,
     self_soothe: /\b(self.?sooth|comfort)\b/i,
     problem_solve: /\b(problem.?solv|figured out)\b/i,
+    mindfulness: /\b(mindful|mindfulness|observe|describe|participate)\b/i,
   },
   intensity: {
     high: /\b(really|very|so|extremely|incredibly)\b/i,
     medium: /\b(pretty|somewhat|fairly|kind of)\b/i,
     low: /\b(a little|slightly|barely|mild)\b/i,
   },
+  explicitValue: /\b(anxiety|anger|sadness|fear|shame|joy|misery|self-?harm|suicide|drugs|urges?)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(\d)\s*(?:out of\s*5|\/\s*5)?/i,
+  numericMention: /\b(\d)\s*(?:out of\s*5|\/\s*5)\b/i,
 };
 
 const emptyCardData: DiaryCardData = {
@@ -136,16 +140,56 @@ export default function RecordingScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const detectFields = useCallback((text: string) => {
+  const detectFields = useCallback((text: string, isAiMessage: boolean = false) => {
     const newData = { ...cardDataRef.current };
     const newGlow = new Set<string>();
     const newUncertain = new Set<string>();
+
+    const explicitMatches = text.matchAll(/\b(anxiety|anger|sadness|fear|shame|joy|misery|self-?harm|suicide|drugs|substances?|alcohol)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(\d)\s*(?:out of\s*5|\/\s*5)?/gi);
+    for (const match of explicitMatches) {
+      const field = match[1].toLowerCase().replace(/-/g, "_");
+      const value = parseInt(match[2]);
+      
+      const emotionMap: Record<string, string> = {
+        anxiety: "anxiety",
+        anger: "anger",
+        sadness: "sadness",
+        fear: "fear",
+        shame: "shame",
+        joy: "joy",
+        misery: "misery",
+      };
+      
+      const urgeMap: Record<string, string> = {
+        self_harm: "self_harm",
+        selfharm: "self_harm",
+        suicide: "suicide",
+        drugs: "drugs",
+        substance: "drugs",
+        substances: "drugs",
+        alcohol: "alcohol",
+      };
+      
+      if (emotionMap[field]) {
+        const emoKey = emotionMap[field];
+        if (!newData.emotions[emoKey] || newData.emotions[emoKey].value === null) {
+          newData.emotions[emoKey] = { value, detected: true };
+          newGlow.add(`emotions.${emoKey}`);
+        }
+      } else if (urgeMap[field]) {
+        const urgeKey = urgeMap[field];
+        if (!newData.urges[urgeKey] || newData.urges[urgeKey].value === null) {
+          newData.urges[urgeKey] = { value, detected: true };
+          newGlow.add(`urges.${urgeKey}`);
+        }
+      }
+    }
 
     Object.entries(DETECTION_PATTERNS.emotions).forEach(([emo, pattern]) => {
       const match = text.match(pattern);
       if (match && !newData.emotions[emo]) {
         const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
-        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/);
+        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/) || ctx.match(/at a (\d)/);
         let val = numMatch ? parseInt(numMatch[1]) : 
           DETECTION_PATTERNS.intensity.high.test(ctx) ? 4 :
           DETECTION_PATTERNS.intensity.medium.test(ctx) ? 3 : null;
@@ -159,7 +203,7 @@ export default function RecordingScreen() {
       const match = text.match(pattern);
       if (match && !newData.urges[urge]) {
         const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
-        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/);
+        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/) || ctx.match(/at a (\d)/);
         const val = numMatch ? parseInt(numMatch[1]) : null;
         newData.urges[urge] = { value: val, detected: true };
         newGlow.add(`urges.${urge}`);
@@ -181,9 +225,11 @@ export default function RecordingScreen() {
 
     cardDataRef.current = newData;
     setCardData(newData);
-    setGlowingFields(newGlow);
-    setUncertainFields(newUncertain);
-    setTimeout(() => setGlowingFields(new Set()), 800);
+    if (newGlow.size > 0) {
+      setGlowingFields(newGlow);
+      setUncertainFields(newUncertain);
+      setTimeout(() => setGlowingFields(new Set()), 800);
+    }
   }, []);
 
   const handleTranscript = useCallback((text: string, isFinal: boolean) => {
@@ -197,10 +243,13 @@ export default function RecordingScreen() {
 
   const handleMessages = useCallback((newMessages: ConversationMessage[]) => {
     setMessages(newMessages);
-    const userMessages = newMessages.filter(m => m.speaker === "user");
-    if (userMessages.length > 0) {
-      const fullUserTranscript = userMessages.map(m => m.text).join(" ");
-      detectFields(fullUserTranscript);
+    
+    const allTranscriptText = newMessages.map(m => m.text).join(" ");
+    detectFields(allTranscriptText);
+    
+    const lastMessage = newMessages[newMessages.length - 1];
+    if (lastMessage && lastMessage.speaker === "ai") {
+      detectFields(lastMessage.text, true);
     }
   }, [detectFields]);
 
