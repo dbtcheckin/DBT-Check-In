@@ -418,7 +418,7 @@ export default function RecordingScreen() {
                       <Feather 
                         name={message.speaker === "user" ? "user" : "cpu"} 
                         size={10} 
-                        color={message.speaker === "user" ? theme.accent : theme.secondary} 
+                        color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
                       />
                       <ThemedText style={[
                         styles.speakerLabel,
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.accent,
   },
   aiLabel: {
-    color: Colors.dark.secondary,
+    color: Colors.dark.accentSecondary,
   },
   messageText: {
     color: Colors.dark.text,
