@@ -50,16 +50,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "realtime",
         model: "gpt-4o-realtime-preview",
         instructions: DBT_INSTRUCTIONS,
-        input_audio_transcription: {
-          model: "gpt-4o-mini-transcribe"
-        },
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500
-        },
-        voice: "coral"
+        audio: {
+          input: {
+            transcription: {
+              model: "gpt-4o-mini-transcribe"
+            },
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 500
+            }
+          },
+          output: {
+            voice: "coral"
+          }
+        }
       });
 
       const formData = new FormData();
