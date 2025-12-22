@@ -22,7 +22,7 @@ import { ThemedText } from "@/components/ThemedText";
 import LiveDiaryCard, { DiaryCardData } from "@/components/LiveDiaryCard";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
-import { useWebRTC } from "@/hooks/useWebRTC";
+import { useWebRTC, ConversationMessage } from "@/hooks/useWebRTC";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -82,12 +82,13 @@ export default function RecordingScreen() {
   const [cardData, setCardData] = useState<DiaryCardData>(emptyCardData);
   const [glowingFields, setGlowingFields] = useState<Set<string>>(new Set());
   const [uncertainFields, setUncertainFields] = useState<Set<string>>(new Set());
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const cardDataRef = useRef<DiaryCardData>(emptyCardData);
 
-  const { connectRealtime, disconnect, getTranscript, connectionError, isSupported } = useWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();
 
   const pulseOpacity = useSharedValue(1);
 
@@ -194,6 +195,15 @@ export default function RecordingScreen() {
     }
   }, [detectFields]);
 
+  const handleMessages = useCallback((newMessages: ConversationMessage[]) => {
+    setMessages(newMessages);
+    const userMessages = newMessages.filter(m => m.speaker === "user");
+    if (userMessages.length > 0) {
+      const fullUserTranscript = userMessages.map(m => m.text).join(" ");
+      detectFields(fullUserTranscript);
+    }
+  }, [detectFields]);
+
   const handleConnectionState = useCallback((state: "connecting" | "connected" | "disconnected" | "error") => {
     setConnectionState(state);
     if (state === "connected") {
@@ -208,13 +218,14 @@ export default function RecordingScreen() {
   const startRecording = async () => {
     try {
       setTranscript("");
+      setMessages([]);
       setCardData(emptyCardData);
       cardDataRef.current = emptyCardData;
       setGlowingFields(new Set());
       setUncertainFields(new Set());
       setRecordingTime(0);
 
-      const success = await connectRealtime(handleTranscript, handleConnectionState);
+      const success = await connectRealtime(handleTranscript, handleConnectionState, handleMessages);
       
       if (!success) {
         console.error("Failed to connect to realtime API");
@@ -232,7 +243,9 @@ export default function RecordingScreen() {
       
       disconnect();
       
-      const finalTranscript = transcript || getTranscript();
+      const userMessages = messages.filter(m => m.speaker === "user");
+      const messagesTranscript = userMessages.map(m => m.text).join(" ");
+      const finalTranscript = transcript || getTranscript() || messagesTranscript;
 
       if (finalTranscript && finalTranscript.trim()) {
         try {
@@ -395,18 +408,44 @@ export default function RecordingScreen() {
                 scrollViewRef.current?.scrollToEnd({ animated: true })
               }
             >
-              <ThemedText
-                style={[
-                  styles.transcript,
-                  !transcript && styles.transcriptPlaceholder,
-                ]}
-                fontFamily="serif"
-              >
-                {transcript || "Speak about your day..."}
-                {transcript && isRecording ? (
-                  <ThemedText style={styles.cursor}>|</ThemedText>
-                ) : null}
-              </ThemedText>
+              {messages.length > 0 ? (
+                messages.map((message) => (
+                  <View key={message.id} style={styles.messageContainer}>
+                    <View style={[
+                      styles.speakerBadge,
+                      message.speaker === "user" ? styles.userBadge : styles.aiBadge
+                    ]}>
+                      <Feather 
+                        name={message.speaker === "user" ? "user" : "cpu"} 
+                        size={10} 
+                        color={message.speaker === "user" ? theme.accent : theme.secondary} 
+                      />
+                      <ThemedText style={[
+                        styles.speakerLabel,
+                        message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                      ]}>
+                        {message.speaker === "user" ? "You" : "AI"}
+                      </ThemedText>
+                    </View>
+                    <ThemedText
+                      style={[
+                        styles.messageText,
+                        !message.isFinal && styles.messageStreaming,
+                      ]}
+                      fontFamily="serif"
+                    >
+                      {message.text}
+                      {!message.isFinal && isRecording ? (
+                        <ThemedText style={styles.cursor}>|</ThemedText>
+                      ) : null}
+                    </ThemedText>
+                  </View>
+                ))
+              ) : (
+                <ThemedText style={[styles.transcript, styles.transcriptPlaceholder]} fontFamily="serif">
+                  Speak about your day...
+                </ThemedText>
+              )}
             </ScrollView>
           </View>
 
@@ -520,8 +559,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 14,
     marginBottom: 12,
-    minHeight: 70,
-    maxHeight: 100,
+    minHeight: 100,
+    maxHeight: 150,
   },
   transcriptScroll: {
     flex: 1,
@@ -536,6 +575,41 @@ const styles = StyleSheet.create({
   },
   cursor: {
     color: Colors.dark.accent,
+  },
+  messageContainer: {
+    marginBottom: 12,
+  },
+  speakerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 4,
+  },
+  userBadge: {
+    opacity: 1,
+  },
+  aiBadge: {
+    opacity: 1,
+  },
+  speakerLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  userLabel: {
+    color: Colors.dark.accent,
+  },
+  aiLabel: {
+    color: Colors.dark.secondary,
+  },
+  messageText: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  messageStreaming: {
+    opacity: 0.85,
   },
   footer: {
     paddingTop: Spacing.sm,
