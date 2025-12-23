@@ -410,9 +410,12 @@ export default function LiveDiaryCard({
                       ]}>
                         {option.value === "scale" ? `0-` : option.shortLabel}
                       </ThemedText>
-                      {option.value === "scale" && emotionTrackingType === "scale" ? (
+                      {option.value === "scale" ? (
                         <TextInput
-                          style={styles.scaleMaxInput}
+                          style={[
+                            styles.scaleMaxInput,
+                            emotionTrackingType === "scale" && styles.scaleMaxInputSelected
+                          ]}
                           value={emotionScaleMax}
                           onChangeText={(text) => {
                             const num = text.replace(/[^0-9]/g, '');
@@ -478,9 +481,12 @@ export default function LiveDiaryCard({
                       ]}>
                         {option.value === "scale" ? `0-` : option.shortLabel}
                       </ThemedText>
-                      {option.value === "scale" && behaviorTrackingType === "scale" ? (
+                      {option.value === "scale" ? (
                         <TextInput
-                          style={styles.scaleMaxInput}
+                          style={[
+                            styles.scaleMaxInput,
+                            behaviorTrackingType === "scale" && styles.scaleMaxInputSelected
+                          ]}
                           value={behaviorScaleMax}
                           onChangeText={(text) => {
                             const num = text.replace(/[^0-9]/g, '');
@@ -734,10 +740,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 0,
     fontSize: 9,
-    color: Colors.dark.text,
+    color: Colors.dark.textSecondary,
     width: 32,
     textAlign: "center",
     marginLeft: 4,
+  },
+  scaleMaxInputSelected: {
+    backgroundColor: Colors.dark.backgroundTertiary,
+    color: Colors.dark.text,
   },
   trackingTypeOptionSelected: {
     backgroundColor: Colors.dark.accent,
