@@ -391,7 +391,7 @@ export default function LiveDiaryCard({
                     onSubmitEditing={handleAddEmotion}
                   />
                   <Pressable onPress={handleAddEmotion} style={styles.addFieldButton}>
-                    <Feather name="plus" size={16} color={Colors.dark.text} />
+                    <Feather name="plus" size={12} color={Colors.dark.text} />
                   </Pressable>
                 </View>
                 <View style={styles.trackingTypeRow}>
@@ -462,7 +462,7 @@ export default function LiveDiaryCard({
                     onSubmitEditing={handleAddBehavior}
                   />
                   <Pressable onPress={handleAddBehavior} style={styles.addFieldButton}>
-                    <Feather name="plus" size={16} color={Colors.dark.text} />
+                    <Feather name="plus" size={12} color={Colors.dark.text} />
                   </Pressable>
                 </View>
                 <View style={styles.trackingTypeRow}>
@@ -720,8 +720,11 @@ const styles = StyleSheet.create({
   },
   addFieldButton: {
     backgroundColor: Colors.dark.accent,
-    borderRadius: BorderRadius.sm,
-    padding: 6,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
   trackingTypeRow: {
     flexDirection: "row",
