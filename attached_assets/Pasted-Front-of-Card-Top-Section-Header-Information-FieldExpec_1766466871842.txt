@@ -1,0 +1,81 @@
+Front of Card (Top Section)
+Header Information
+FieldExpected EntryNameClient's name, initials, or clinical IDFilled Out in Session?Circle Y (yes) or N (no)How Often Did You Fill Out?Circle: Daily, 2-3x, 4-6x, or OnceLast Day Filled OutMonth, Year, Day
+
+Daily Tracking Grid (One row per day: MON–SUN)
+Highest Urge To: (Rate 0–5)
+ColumnRating ScaleDescriptionCommit Suicide0–50 = no urge; 5 = strongest urges imaginableSelf-Harm0–5Urges to engage in self-harm or self-injurious behaviorsUse Drugs0–5Urges to use any drug of abuse (alcohol, OTC meds, prescription meds, street/illicit drugs) or urge to escape
+Highest Rating for Each Day: (Rate 0–5)
+ColumnRating ScaleDescriptionEmotion Misery0–5Intensity of emotional misery experiencedPhysical Misery0–5Intensity of physical misery or painJoy0–5Degree of joy or happiness experienced
+Drugs/Medications:
+ColumnExpected EntryAlcoholNumber (#) + What type (e.g., "3" for 3 beers)Illegal DrugsNumber (#) + What type and how much (e.g., heroin)Meds. as PrescribedY/N (Y = taken as prescribed; N = not taken correctly)p.r.n./Over-the-Counter Meds.Number (#) + What type
+Tip: Use "ditto" marks for same-as-previous-day, horizontal lines through rows for no use, vertical lines through columns for no use that week.
+Actions:
+ColumnExpected EntryDescriptionSelf-HarmY/NAny intentional self-harm or suicide attemptLiedNumber (#)Number of lies told that day (overt or covert); asterisk (*) = lied on diary cardUsed Skills0–7See "Used Skills" scale below
+Used Skills Scale (0–7):
+RatingMeaning0Not thought about or used1Thought about, not used, didn't want to2Thought about, not used, wanted to3Tried but couldn't use them4Tried, could do them but they didn't help5Tried, could use them, helped6Automatically used them, didn't help7Automatically used them, helped
+Emotions / Optional Columns:
+ColumnExpected EntryEmotionsOptional – track specific emotions (decide with therapist: Y/N, 0–5, 0–7, or describe)ThoughtsOptional – track specific thoughts or behaviors (decide with therapist how to track)
+
+Below the Daily Grid
+FieldExpected EntryMed. Change This WeekWrite any changes in prescribed medications (dosage increases/decreases, new medications, stopped medications)Homework Assigned and Results This WeekRecord behaviors assigned, what was done, and results
+
+Session Tracking (Completed at beginning and end of session)
+Urges to: (Rate 0–5)
+RowComing into Session (0–5)Quit Therapy0–5Use Drugs0–5Commit Suicide0–5
+Belief I Can Change or Regulate My: (Rate 0–5)
+RowComing into Session (0–5)Emotions0–5Actions0–5Thoughts0–5
+FieldExpected EntrySkills Focus This WeekWrite skills specifically focused on, used, or practiced; or skills needing more focus
+
+Back of Card (Skills Tracking)
+Header
+FieldExpected EntryFilled out this card?Circle: Daily, 2-3x, 4-6x, Once, or In session
+Skills Checklist
+Instructions: Circle the days (MON, TUE, WED, THUR, FRI, SAT, SUN) when each skill was practiced.
+Mindfulness Skills:
+
+Wise mind
+Observe: Just notice
+Describe: Put words on, just the facts
+Participate: Enter into the experience
+Nonjudgmentally
+One-mindfully: Present moment
+Effectively: Focus on what works
+
+Interpersonal Effectiveness Skills:
+
+DEAR (Describe, Express, Assert, Reinforce)
+MAN (Mindful, Appear confident, Negotiate)
+GIVE (Gentle, Interested, Validate, Easy manner)
+FAST (Fair, no Apologies, Stick to values, Truthful)
+Walked the middle path; Dialectics
+Validation
+Strategies to change behavior
+
+Emotion Regulation Skills:
+
+Checked the facts
+Did opposite action
+Problem-solved
+Accumulated positive emotions A
+Built mastery B
+Coped ahead C
+Reduced vulnerability: PLEASE
+Mindfulness of current emotion
+
+Distress Tolerance Skills:
+
+CRISIS
+STOP skill
+SURVIVAL: Pros and cons
+TIP (Temperature, Intense exercise, Paced breathing, Paired muscle relaxation)
+Distracted
+Self-soothed
+Improved the moment
+REALITY: Radical acceptance
+ACCEPT: Half-smiling, Willing Hands
+Willingness, Mindfulness of Current Thoughts
+
+
+Summary of All Rating Scales Used
+ScaleWhere Used0–5All urges, emotions (misery, joy), belief in ability to change/regulate0–7Used Skills ratingY/NFilled out in session, Self-harm action, Meds as prescribedNumber (#)Alcohol, Illegal drugs, OTC meds, Lies toldCircle daysAll skills on back of cardWritten textName, Med changes, Homework, Skills focus
