@@ -585,9 +585,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: 12,
+    overflow: "visible",
   },
   column: {
     flex: 1,
+    overflow: "visible",
   },
   sectionTitle: {
     fontSize: 9,
@@ -705,7 +707,7 @@ const styles = StyleSheet.create({
   addFieldRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   addFieldInput: {
     flex: 1,

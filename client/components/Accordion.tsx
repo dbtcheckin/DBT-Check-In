@@ -112,7 +112,6 @@ export function Accordion({
 
 const styles = StyleSheet.create({
   container: {
-    overflow: "hidden",
     borderRadius: BorderRadius.xl,
   },
   header: {
