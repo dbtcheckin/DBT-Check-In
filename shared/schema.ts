@@ -15,10 +15,13 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export type TrackingType = "boolean" | "scale5" | "scale7" | "quantity";
+
 export type CustomFieldConfig = {
   id: string;
   label: string;
   type: "emotion" | "behavior";
+  trackingType: TrackingType;
   scale?: { min: number; max: number };
   createdAt: string;
 };

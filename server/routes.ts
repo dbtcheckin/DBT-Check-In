@@ -319,9 +319,14 @@ Respond with valid JSON only:
         return res.status(400).json({ error: "X-Device-ID header required" });
       }
 
-      const { label } = req.body;
+      const { label, trackingType = "scale5" } = req.body;
       if (!label || typeof label !== "string") {
         return res.status(400).json({ error: "Label is required" });
+      }
+
+      const validTrackingTypes = ["boolean", "scale5", "scale7", "quantity"];
+      if (!validTrackingTypes.includes(trackingType)) {
+        return res.status(400).json({ error: "Invalid tracking type" });
       }
 
       let config = await storage.getUserFieldConfigs(deviceId);
@@ -335,11 +340,17 @@ Respond with valid JSON only:
         return res.status(400).json({ error: "Custom emotion already exists" });
       }
 
+      const scaleMap: Record<string, { min: number; max: number } | undefined> = {
+        scale5: { min: 0, max: 5 },
+        scale7: { min: 0, max: 7 },
+      };
+
       const newEmotion = {
         id: fieldId,
         label,
         type: "emotion" as const,
-        scale: { min: 0, max: 5 },
+        trackingType: trackingType as "boolean" | "scale5" | "scale7" | "quantity",
+        scale: scaleMap[trackingType],
         createdAt: new Date().toISOString(),
       };
 
@@ -357,9 +368,14 @@ Respond with valid JSON only:
         return res.status(400).json({ error: "X-Device-ID header required" });
       }
 
-      const { label } = req.body;
+      const { label, trackingType = "boolean" } = req.body;
       if (!label || typeof label !== "string") {
         return res.status(400).json({ error: "Label is required" });
+      }
+
+      const validTrackingTypes = ["boolean", "scale5", "scale7", "quantity"];
+      if (!validTrackingTypes.includes(trackingType)) {
+        return res.status(400).json({ error: "Invalid tracking type" });
       }
 
       let config = await storage.getUserFieldConfigs(deviceId);
@@ -373,10 +389,17 @@ Respond with valid JSON only:
         return res.status(400).json({ error: "Custom behavior already exists" });
       }
 
+      const scaleMap: Record<string, { min: number; max: number } | undefined> = {
+        scale5: { min: 0, max: 5 },
+        scale7: { min: 0, max: 7 },
+      };
+
       const newBehavior = {
         id: fieldId,
         label,
         type: "behavior" as const,
+        trackingType: trackingType as "boolean" | "scale5" | "scale7" | "quantity",
+        scale: scaleMap[trackingType],
         createdAt: new Date().toISOString(),
       };
 
