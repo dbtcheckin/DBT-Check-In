@@ -20,6 +20,7 @@ interface AccordionProps {
   children: React.ReactNode;
   style?: ViewStyle;
   titleStyle?: object;
+  headerRight?: React.ReactNode;
 }
 
 const springConfig = {
@@ -34,6 +35,7 @@ export function Accordion({
   children,
   style,
   titleStyle,
+  headerRight,
 }: AccordionProps) {
   const { theme } = useTheme();
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -85,13 +87,16 @@ export function Accordion({
           <ThemedText type="caption" style={[styles.headerText, titleStyle]}>
             {title}
           </ThemedText>
-          <Animated.View style={chevronAnimatedStyle}>
-            <Feather
-              name="chevron-down"
-              size={18}
-              color={theme.textSecondary}
-            />
-          </Animated.View>
+          <View style={styles.headerRightContainer}>
+            {headerRight}
+            <Animated.View style={chevronAnimatedStyle}>
+              <Feather
+                name="chevron-down"
+                size={18}
+                color={theme.textSecondary}
+              />
+            </Animated.View>
+          </View>
         </Pressable>
       </Animated.View>
 
@@ -126,6 +131,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
     opacity: 0.7,
+  },
+  headerRightContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
   },
   content: {
     paddingLeft: Spacing.md,

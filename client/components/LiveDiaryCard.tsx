@@ -363,17 +363,18 @@ export default function LiveDiaryCard({
         title="Custom Emotions & Behaviors (OPTIONAL)" 
         defaultExpanded={false}
         titleStyle={styles.headerText}
+        headerRight={(customEmotions.length > 0 || customBehaviors.length > 0) ? (
+          <Pressable 
+            onPress={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} 
+            style={styles.editToggle}
+          >
+            <Feather name={isEditMode ? "check" : "edit-2"} size={12} color={Colors.dark.textSecondary} />
+          </Pressable>
+        ) : undefined}
       >
         <View style={styles.row}>
           <View style={styles.column}>
-            <View style={styles.sectionTitleRow}>
-              <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
-              {(customEmotions.length > 0 || customBehaviors.length > 0) ? (
-                <Pressable onPress={() => setIsEditMode(!isEditMode)} style={styles.editToggle}>
-                  <Feather name={isEditMode ? "check" : "edit-2"} size={10} color={Colors.dark.textSecondary} />
-                </Pressable>
-              ) : null}
-            </View>
+            <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
             {OPTIONAL_EMOTIONS.map((field) => (
               <FieldCell
                 key={field.id}
