@@ -416,7 +416,7 @@ export default function LiveDiaryCard({
                           value={emotionScaleMax}
                           onChangeText={(text) => {
                             const num = text.replace(/[^0-9]/g, '');
-                            if (num === '' || (parseInt(num) >= 0 && parseInt(num) <= 100)) {
+                            if (num === '' || (parseInt(num) >= 1 && parseInt(num) <= 100)) {
                               setEmotionScaleMax(num);
                             }
                           }}
@@ -484,7 +484,7 @@ export default function LiveDiaryCard({
                           value={behaviorScaleMax}
                           onChangeText={(text) => {
                             const num = text.replace(/[^0-9]/g, '');
-                            if (num === '' || (parseInt(num) >= 0 && parseInt(num) <= 100)) {
+                            if (num === '' || (parseInt(num) >= 1 && parseInt(num) <= 100)) {
                               setBehaviorScaleMax(num);
                             }
                           }}
