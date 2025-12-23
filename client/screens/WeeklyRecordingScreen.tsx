@@ -390,16 +390,14 @@ export default function WeeklyRecordingScreen() {
         </View>
       ) : (
         <View style={styles.content}>
-          <ScrollView style={styles.cardScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.cardContainer}>
-              <LiveWeeklyCard
-                data={cardData}
-                glowingFields={glowingFields}
-                uncertainFields={uncertainFields}
-                weekRange={weekRange}
-              />
-            </View>
-          </ScrollView>
+          <View style={styles.cardContainer}>
+            <LiveWeeklyCard
+              data={cardData}
+              glowingFields={glowingFields}
+              uncertainFields={uncertainFields}
+              weekRange={weekRange}
+            />
+          </View>
 
           <View style={styles.transcriptSection}>
             <ScrollView
@@ -550,18 +548,16 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     color: Colors.dark.textSecondary,
   },
-  cardScroll: {
-    flex: 1,
-    maxHeight: "45%",
-  },
   cardContainer: {
-    marginBottom: Spacing.md,
+    flexShrink: 0,
+    marginBottom: Spacing.sm,
   },
   transcriptSection: {
     flex: 1,
+    maxHeight: 100,
     backgroundColor: Colors.dark.backgroundDefault,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
+    padding: Spacing.sm,
     marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.dark.border,
