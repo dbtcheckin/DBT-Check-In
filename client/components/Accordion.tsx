@@ -128,7 +128,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   content: {
-    paddingHorizontal: Spacing.md,
+    paddingLeft: Spacing.md,
+    paddingRight: Spacing.lg + 4,
     paddingVertical: Spacing.md,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
