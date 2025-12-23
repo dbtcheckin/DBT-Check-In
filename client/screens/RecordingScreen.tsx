@@ -195,6 +195,94 @@ export default function RecordingScreen() {
       }
     }
 
+    const urgeFieldMap: Record<string, string> = {
+      suicide: "suicide",
+      "self-harm": "self_harm",
+      "self harm": "self_harm",
+      selfharm: "self_harm",
+      drugs: "drugs",
+      substance: "drugs",
+      substances: "drugs",
+      alcohol: "alcohol",
+      drink: "alcohol",
+      drinking: "alcohol",
+    };
+
+    const emotionFieldMap: Record<string, string> = {
+      anxiety: "anxiety",
+      anger: "anger",
+      sadness: "sadness",
+      fear: "fear",
+      shame: "shame",
+      joy: "joy",
+      misery: "misery",
+    };
+
+    const extractFieldsFromList = (listText: string): { urges: string[]; emotions: string[] } => {
+      const urges: string[] = [];
+      const emotions: string[] = [];
+      const normalized = listText.toLowerCase();
+      
+      Object.keys(urgeFieldMap).forEach(key => {
+        if (normalized.includes(key)) {
+          const mapped = urgeFieldMap[key];
+          if (!urges.includes(mapped)) urges.push(mapped);
+        }
+      });
+      
+      Object.keys(emotionFieldMap).forEach(key => {
+        if (normalized.includes(key)) {
+          const mapped = emotionFieldMap[key];
+          if (!emotions.includes(mapped)) emotions.push(mapped);
+        }
+      });
+      
+      return { urges, emotions };
+    };
+
+    const groupedWithScore = text.match(/(?:urges?\s+(?:for\s+|today\s+(?:for\s+)?)?)?(.+?(?:,\s*.+?)*(?:,?\s+and\s+.+?)?)\s+(?:at|is|are|were|was)\s*(?:a\s*)?(zero|one|two|three|four|five|\d)/gi);
+    if (groupedWithScore) {
+      for (const match of groupedWithScore) {
+        const valueMatch = match.match(/(zero|one|two|three|four|five|\d)\s*$/i);
+        if (valueMatch) {
+          const value = wordToNumber(valueMatch[1]);
+          if (value !== null) {
+            const listPart = match.replace(/(zero|one|two|three|four|five|\d)\s*$/i, "")
+              .replace(/\s*(at|is|are|were|was)\s*(?:a\s*)?$/i, "");
+            const { urges, emotions } = extractFieldsFromList(listPart);
+            
+            urges.forEach(urge => {
+              if (!newData.urges[urge] || newData.urges[urge].value === null) {
+                newData.urges[urge] = { value, detected: true };
+                newGlow.add(`urges.${urge}`);
+              }
+            });
+            
+            emotions.forEach(emo => {
+              if (!newData.emotions[emo] || newData.emotions[emo].value === null) {
+                newData.emotions[emo] = { value, detected: true };
+                newGlow.add(`emotions.${emo}`);
+              }
+            });
+          }
+        }
+      }
+    }
+
+    const noUrgesPattern = /(?:no|zero|didn't have(?: any)?)\s+urges?\s+(?:for\s+|to\s+|toward\s+|today\s+(?:for\s+)?)?(.+?(?:,\s*.+?)*(?:,?\s+(?:and|or)\s+.+?)?)/gi;
+    const noUrgesMatches = text.matchAll(noUrgesPattern);
+    for (const match of noUrgesMatches) {
+      const listPart = match[1];
+      const { urges } = extractFieldsFromList(listPart);
+      
+      urges.forEach(urge => {
+        if (!newData.urges[urge] || newData.urges[urge].value === null) {
+          newData.urges[urge] = { value: 0, detected: true };
+          newGlow.add(`urges.${urge}`);
+        }
+      });
+    }
+
     const parseContextNumber = (ctx: string): number | null => {
       const numPattern = /(zero|one|two|three|four|five|\d)\s*(out of|\/)\s*5/i;
       const atPattern = /at\s*(?:a\s*)?(zero|one|two|three|four|five|\d)/i;
