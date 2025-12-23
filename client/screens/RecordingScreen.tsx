@@ -726,21 +726,19 @@ export default function RecordingScreen() {
         </View>
       ) : (
         <View style={styles.content}>
-          <ScrollView style={styles.cardScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.cardContainer}>
-              <LiveDiaryCard
-                data={cardData}
-                glowingFields={glowingFields}
-                uncertainFields={uncertainFields}
-                customEmotions={fieldConfigs?.customEmotions || []}
-                customBehaviors={fieldConfigs?.customBehaviors || []}
-                onAddCustomEmotion={handleAddCustomEmotion}
-                onAddCustomBehavior={handleAddCustomBehavior}
-                onDeleteCustomEmotion={handleDeleteCustomEmotion}
-                onDeleteCustomBehavior={handleDeleteCustomBehavior}
-              />
-            </View>
-          </ScrollView>
+          <View style={styles.cardContainer}>
+            <LiveDiaryCard
+              data={cardData}
+              glowingFields={glowingFields}
+              uncertainFields={uncertainFields}
+              customEmotions={fieldConfigs?.customEmotions || []}
+              customBehaviors={fieldConfigs?.customBehaviors || []}
+              onAddCustomEmotion={handleAddCustomEmotion}
+              onAddCustomBehavior={handleAddCustomBehavior}
+              onDeleteCustomEmotion={handleDeleteCustomEmotion}
+              onDeleteCustomBehavior={handleDeleteCustomBehavior}
+            />
+          </View>
 
           <View style={styles.transcriptSection}>
             <ScrollView
@@ -872,20 +870,19 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     color: Colors.dark.textSecondary,
   },
-  cardScroll: {
-    flex: 1,
-  },
   cardContainer: {
-    marginBottom: Spacing.md,
+    flexShrink: 0,
+    marginBottom: Spacing.sm,
   },
   transcriptSection: {
     flex: 1,
+    minHeight: 60,
     backgroundColor: Colors.dark.backgroundDefault,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 12,
-    minHeight: 100,
-    maxHeight: 150,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
   },
   transcriptScroll: {
     flex: 1,
