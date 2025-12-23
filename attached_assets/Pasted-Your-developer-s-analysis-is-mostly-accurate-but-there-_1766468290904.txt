@@ -1,0 +1,28 @@
+Your developer's analysis is mostly accurate, but there are a few corrections and clarifications needed based on the official DBT Diary Card images you uploaded. Let me provide a detailed comparison:
+
+Developer's Analysis: Corrections & Clarifications
+Developer's StatementVerdictCorrection/ClarificationUrges (3): Suicide, Self-Harm, Drugs (0-5 scale)✓ CorrectMatches official cardEmotions (6): Anxiety, Sadness, Anger, Shame, Joy, Misery✗ IncorrectOfficial card only has 3 emotion fields: Emotion Misery, Physical Misery, and Joy. Anxiety, Sadness, Anger, Shame, Fear are NOT on the standard card—they belong in the optional "Emotions" column if customized with therapist"Missing Physical Misery & Fear"✗ Partially incorrectPhysical Misery should be added, but Fear is NOT a standard field—it would be optional/customActions: Skills Used should be 0-7✓ CorrectOfficial card uses 0-7 scaleActions: Lied should be count✓ CorrectOfficial instructions say to record number (#) of liesMissing PRN/OTC Meds✓ CorrectOfficial card has separate column for p.r.n./Over-the-Counter MedsSubstances need quantity + type✓ CorrectOfficial card asks for # and "What?" for alcohol, illegal drugs, and OTC medsSkills (32): All 4 modules present✓ CorrectOfficial card has 31 skill items across 4 modules (count may vary slightly by version)Weekly fields count as 9✗ Slightly offShould be 9 weekly fields total (6 session ratings + 3 text fields)
+
+Official DBT Diary Card Fields (Corrected Reference)
+DAILY FIELDS (Voice Input)
+CategoryFieldRating/FormatStatus in Current AppUrgesCommit Suicide0–5✓ PresentSelf-Harm0–5✓ PresentUse Drugs0–5✓ PresentHighest RatingsEmotion Misery0–5⚠️ Present as "Misery" (confirm it's emotional, not combined)Physical Misery0–5✗ ADDJoy0–5✓ PresentDrugs/MedicationsAlcohol# + What type✗ FIX (needs quantity + type)Illegal Drugs# + What type✗ FIX (needs quantity + type)Meds as PrescribedY/N✓ Present (confirm Y/N format)p.r.n./OTC Meds# + What type✗ ADDActionsSelf-HarmY/N✓ PresentLied# (count)✗ FIX (change from Y/N to count)Used Skills0–7✗ FIX (change from Y/N to 0-7 scale)OptionalEmotions (custom)Varies⚠️ Current app has Anxiety, Sadness, Anger, Shame, Fear—these are optional expansions, not core fieldsThoughts (custom)Varies? Check if presentSkills Checklist31 skills across 4 modulesCircle days (Y/N per day)✓ Present (32 in app)
+WEEKLY FIELDS (Voice Input)
+CategoryFieldRating/FormatStatus in Current AppSession UrgesQuit Therapy0–5✗ ADDUse Drugs0–5✗ ADDCommit Suicide0–5✗ ADDBelief in Ability to RegulateEmotions0–5✗ ADDActions0–5✗ ADDThoughts0–5✗ ADDText FieldsMed. Change This WeekText✗ ADDHomework Assigned and ResultsText✗ ADDSkills Focus This WeekText✗ ADD
+SYSTEM-GENERATED FIELDS
+FieldFormatStatus in Current AppName / Client IDText (pre-populated)? CheckDate / Day of WeekAuto-generated? CheckFilled Out in Session?Y/N (default N)✗ ADDHow Often Did You Fill Out?Calculated count✗ ADDLast Day Filled OutAuto timestamp✗ ADD
+
+Summary of Required Changes
+High Priority Fixes (Core DBT Compliance)
+ChangeTypeDetails1. Add Physical MiseryADD field0–5 daily rating2. Fix Used Skills scaleCHANGEFrom Y/N → 0–7 scale3. Fix Lied formatCHANGEFrom Y/N → Number count4. Add p.r.n./OTC MedsADD field# + What type5. Fix Alcohol trackingCHANGEFrom Y/N → # + What type6. Fix Illegal Drugs trackingCHANGEFrom Y/N → # + What type7. Add Weekly Session sectionADD section6 ratings (0–5) + 3 text fields
+Medium Priority (Compliance + Usability)
+ChangeTypeDetails8. Add system header fieldsADDFilled Out in Session, How Often, Last Day9. Clarify Emotion Misery vs Physical MiseryRENAMEEnsure "Misery" field is labeled "Emotion Misery"
+Low Priority / Optional (Enhanced Features)
+ChangeTypeDetails10. Keep expanded emotions as optionalKEEPAnxiety, Sadness, Anger, Shame, Fear can remain as optional custom tracking11. Add optional Thoughts trackingADDCustom field for therapist-defined thought tracking
+
+Corrected Field Counts
+CategoryOfficial CountCurrent AppAfter FixesDaily Urges333Daily Highest Ratings (Emotions)31 (missing Physical Misery)3Daily Drugs/Medications434Daily Actions33 (but wrong formats)3Daily Skills Checklist313231–32Optional Daily (Emotions/Thoughts)2+5Keep as optionalWeekly Session Ratings606Weekly Text Fields303System Fields5?5TOTAL CORE FIELDS~53~42~53
+
+Voice Prompt Updates Needed
+FieldCurrent Prompt (Assumed)Corrected PromptUsed Skills"Did you use skills today? Yes or no?""Rate your skill usage today from 0 to 7, where 0 means you didn't think about skills, and 7 means you automatically used them and they helped."Lied"Did you lie today? Yes or no?""How many times did you lie today? Give me a number."Alcohol"Did you drink alcohol today?""Did you drink any alcohol today? If yes, how many drinks and what type?"Illegal Drugs"Did you use drugs today?""Did you use any illegal or non-prescribed drugs today? If yes, what type and how much?"Physical Misery(missing)"Rate your physical pain or discomfort today from 0 to 5."p.r.n./OTC Meds(missing)"Did you take any over-the-counter or as-needed medications today? If yes, what and how many?"
+
+Your developer's analysis was solid overall. The main correction is that the official DBT card only has 3 core emotion fields (Emotion Misery, Physical Misery, Joy)—not 6. The additional emotions (Anxiety, Sadness, Anger, Shame, Fear) your app tracks are expansions that can remain as optional custom fields, which is actually a nice enhancement beyond the standard card.
