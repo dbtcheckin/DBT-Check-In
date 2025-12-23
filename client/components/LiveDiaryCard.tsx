@@ -93,9 +93,10 @@ type FieldCellProps = {
   type?: "scale" | "scale7" | "boolean" | "count" | "text" | "quantity";
   color?: string;
   scaleLabel?: string;
+  trailingContent?: React.ReactNode;
 };
 
-function FieldCell({ label, value, isGlowing, isUncertain, type = "scale", color, scaleLabel }: FieldCellProps) {
+function FieldCell({ label, value, isGlowing, isUncertain, type = "scale", color, scaleLabel, trailingContent }: FieldCellProps) {
   const hasVal = value !== undefined && value !== null;
   let display: string;
   
@@ -125,16 +126,18 @@ function FieldCell({ label, value, isGlowing, isUncertain, type = "scale", color
         </ThemedText>
         {scaleLabel ? <ThemedText style={styles.scaleLabel}>{scaleLabel}</ThemedText> : null}
       </View>
-      <ThemedText
-        style={[
-          styles.fieldValue,
-          hasVal && styles.fieldValueActive,
-          isUncertain && styles.fieldValueUncertain,
-        ]}
-        fontFamily="mono"
-      >
-        {isUncertain ? "?" : display}
-      </ThemedText>
+      {trailingContent ? trailingContent : (
+        <ThemedText
+          style={[
+            styles.fieldValue,
+            hasVal && styles.fieldValueActive,
+            isUncertain && styles.fieldValueUncertain,
+          ]}
+          fontFamily="mono"
+        >
+          {isUncertain ? "?" : display}
+        </ThemedText>
+      )}
     </View>
   );
 }
@@ -363,11 +366,11 @@ export default function LiveDiaryCard({
       >
         <View style={styles.row}>
           <View style={styles.column}>
-            <View style={styles.subsectionHeader}>
+            <View style={styles.sectionTitleRow}>
               <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
               {(customEmotions.length > 0 || customBehaviors.length > 0) ? (
-                <Pressable onPress={() => setIsEditMode(!isEditMode)} style={styles.editButton}>
-                  <Feather name={isEditMode ? "check" : "edit-2"} size={12} color={Colors.dark.textSecondary} />
+                <Pressable onPress={() => setIsEditMode(!isEditMode)} style={styles.editToggle}>
+                  <Feather name={isEditMode ? "check" : "edit-2"} size={10} color={Colors.dark.textSecondary} />
                 </Pressable>
               ) : null}
             </View>
@@ -382,25 +385,22 @@ export default function LiveDiaryCard({
               />
             ))}
             {customEmotions.map((field) => (
-              <View key={field.id} style={styles.editableFieldRow}>
-                {isEditMode && onDeleteCustomEmotion ? (
+              <FieldCell
+                key={field.id}
+                label={field.label}
+                value={data.emotions[field.id]?.value}
+                isGlowing={glowingFields.has(`emotions.${field.id}`)}
+                type={getFieldType(field.trackingType)}
+                scaleLabel={`(${getTrackingTypeLabel(field)})`}
+                trailingContent={isEditMode && onDeleteCustomEmotion ? (
                   <Pressable 
                     onPress={() => onDeleteCustomEmotion(field.id)} 
-                    style={styles.deleteButton}
+                    style={styles.deleteTrash}
                   >
-                    <Feather name="trash-2" size={12} color={Colors.dark.error} />
+                    <Feather name="trash-2" size={14} color="#e57373" />
                   </Pressable>
-                ) : null}
-                <View style={styles.editableFieldContent}>
-                  <FieldCell
-                    label={field.label}
-                    value={data.emotions[field.id]?.value}
-                    isGlowing={glowingFields.has(`emotions.${field.id}`)}
-                    type={getFieldType(field.trackingType)}
-                    scaleLabel={`(${getTrackingTypeLabel(field)})`}
-                  />
-                </View>
-              </View>
+                ) : undefined}
+              />
             ))}
             {onAddCustomEmotion ? (
               <View style={styles.addFieldContainer}>
@@ -461,25 +461,22 @@ export default function LiveDiaryCard({
           <View style={styles.column}>
             <ThemedText style={styles.subsectionTitle}>Behaviors</ThemedText>
             {customBehaviors.map((field) => (
-              <View key={field.id} style={styles.editableFieldRow}>
-                {isEditMode && onDeleteCustomBehavior ? (
+              <FieldCell
+                key={field.id}
+                label={field.label}
+                value={data.behaviors?.[field.id] ? true : false}
+                type={getFieldType(field.trackingType)}
+                isGlowing={glowingFields.has(`behaviors.${field.id}`)}
+                scaleLabel={`(${getTrackingTypeLabel(field)})`}
+                trailingContent={isEditMode && onDeleteCustomBehavior ? (
                   <Pressable 
                     onPress={() => onDeleteCustomBehavior(field.id)} 
-                    style={styles.deleteButton}
+                    style={styles.deleteTrash}
                   >
-                    <Feather name="trash-2" size={12} color={Colors.dark.error} />
+                    <Feather name="trash-2" size={14} color="#e57373" />
                   </Pressable>
-                ) : null}
-                <View style={styles.editableFieldContent}>
-                  <FieldCell
-                    label={field.label}
-                    value={data.behaviors?.[field.id] ? true : false}
-                    type={getFieldType(field.trackingType)}
-                    isGlowing={glowingFields.has(`behaviors.${field.id}`)}
-                    scaleLabel={`(${getTrackingTypeLabel(field)})`}
-                  />
-                </View>
-              </View>
+                ) : undefined}
+              />
             ))}
             {customBehaviors.length === 0 ? (
               <ThemedText style={styles.emptyText}>No behaviors tracked yet</ThemedText>
@@ -804,5 +801,17 @@ const styles = StyleSheet.create({
     color: Colors.dark.textGhost,
     fontStyle: "italic",
     paddingVertical: 8,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  editToggle: {
+    padding: 4,
+  },
+  deleteTrash: {
+    padding: 4,
   },
 });

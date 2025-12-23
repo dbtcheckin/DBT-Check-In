@@ -133,6 +133,38 @@ export default function RecordingScreen() {
     addBehaviorMutation.mutate({ label, trackingType, scaleMax });
   };
 
+  const deleteEmotionMutation = useMutation({
+    mutationFn: async (fieldId: string) => {
+      return apiRequest("DELETE", `/api/field-configs/emotion/${fieldId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
+    },
+    onError: (error) => {
+      console.error("Failed to delete custom emotion:", error);
+    },
+  });
+
+  const deleteBehaviorMutation = useMutation({
+    mutationFn: async (fieldId: string) => {
+      return apiRequest("DELETE", `/api/field-configs/behavior/${fieldId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
+    },
+    onError: (error) => {
+      console.error("Failed to delete custom behavior:", error);
+    },
+  });
+
+  const handleDeleteCustomEmotion = (fieldId: string) => {
+    deleteEmotionMutation.mutate(fieldId);
+  };
+
+  const handleDeleteCustomBehavior = (fieldId: string) => {
+    deleteBehaviorMutation.mutate(fieldId);
+  };
+
   const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();
 
   const pulseOpacity = useSharedValue(1);
@@ -716,6 +748,8 @@ export default function RecordingScreen() {
                 customBehaviors={fieldConfigs?.customBehaviors || []}
                 onAddCustomEmotion={handleAddCustomEmotion}
                 onAddCustomBehavior={handleAddCustomBehavior}
+                onDeleteCustomEmotion={handleDeleteCustomEmotion}
+                onDeleteCustomBehavior={handleDeleteCustomBehavior}
               />
             </View>
           </ScrollView>
