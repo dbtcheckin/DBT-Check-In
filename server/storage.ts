@@ -1,4 +1,4 @@
-import { users, diaryEntries, type User, type InsertUser, type DiaryEntry, type InsertDiaryEntry, type UpdateDiaryEntry } from "@shared/schema";
+import { users, diaryEntries, userFieldConfigs, type User, type InsertUser, type DiaryEntry, type InsertDiaryEntry, type UpdateDiaryEntry, type UserFieldConfig, type CustomFieldConfig } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 
@@ -15,6 +15,12 @@ export interface IStorage {
   createDiaryEntry(entry: InsertDiaryEntry): Promise<DiaryEntry>;
   updateDiaryEntry(id: string, data: UpdateDiaryEntry): Promise<DiaryEntry | undefined>;
   deleteDiaryEntry(id: string): Promise<boolean>;
+  
+  getUserFieldConfigs(deviceId: string): Promise<UserFieldConfig | undefined>;
+  createUserFieldConfigs(deviceId: string): Promise<UserFieldConfig>;
+  addCustomEmotion(configId: string, emotion: CustomFieldConfig): Promise<UserFieldConfig | undefined>;
+  addCustomBehavior(configId: string, behavior: CustomFieldConfig): Promise<UserFieldConfig | undefined>;
+  removeCustomField(configId: string, fieldId: string, type: "emotion" | "behavior"): Promise<UserFieldConfig | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -87,6 +93,74 @@ export class DatabaseStorage implements IStorage {
   async deleteDiaryEntry(id: string): Promise<boolean> {
     const result = await db.delete(diaryEntries).where(eq(diaryEntries.id, id));
     return true;
+  }
+
+  async getUserFieldConfigs(deviceId: string): Promise<UserFieldConfig | undefined> {
+    const [config] = await db.select().from(userFieldConfigs).where(eq(userFieldConfigs.userId, deviceId));
+    return config || undefined;
+  }
+
+  async createUserFieldConfigs(deviceId: string): Promise<UserFieldConfig> {
+    const [config] = await db
+      .insert(userFieldConfigs)
+      .values({ userId: deviceId, customEmotions: [], customBehaviors: [] })
+      .returning();
+    return config;
+  }
+
+  async addCustomEmotion(configId: string, emotion: CustomFieldConfig): Promise<UserFieldConfig | undefined> {
+    const existingConfig = await db.select().from(userFieldConfigs).where(eq(userFieldConfigs.id, configId));
+    if (!existingConfig[0]) return undefined;
+    
+    const currentEmotions = existingConfig[0].customEmotions || [];
+    const [config] = await db
+      .update(userFieldConfigs)
+      .set({ 
+        customEmotions: [...currentEmotions, emotion],
+        updatedAt: new Date()
+      })
+      .where(eq(userFieldConfigs.id, configId))
+      .returning();
+    return config || undefined;
+  }
+
+  async addCustomBehavior(configId: string, behavior: CustomFieldConfig): Promise<UserFieldConfig | undefined> {
+    const existingConfig = await db.select().from(userFieldConfigs).where(eq(userFieldConfigs.id, configId));
+    if (!existingConfig[0]) return undefined;
+    
+    const currentBehaviors = existingConfig[0].customBehaviors || [];
+    const [config] = await db
+      .update(userFieldConfigs)
+      .set({ 
+        customBehaviors: [...currentBehaviors, behavior],
+        updatedAt: new Date()
+      })
+      .where(eq(userFieldConfigs.id, configId))
+      .returning();
+    return config || undefined;
+  }
+
+  async removeCustomField(configId: string, fieldId: string, type: "emotion" | "behavior"): Promise<UserFieldConfig | undefined> {
+    const existingConfig = await db.select().from(userFieldConfigs).where(eq(userFieldConfigs.id, configId));
+    if (!existingConfig[0]) return undefined;
+    
+    if (type === "emotion") {
+      const filtered = (existingConfig[0].customEmotions || []).filter(e => e.id !== fieldId);
+      const [config] = await db
+        .update(userFieldConfigs)
+        .set({ customEmotions: filtered, updatedAt: new Date() })
+        .where(eq(userFieldConfigs.id, configId))
+        .returning();
+      return config || undefined;
+    } else {
+      const filtered = (existingConfig[0].customBehaviors || []).filter(b => b.id !== fieldId);
+      const [config] = await db
+        .update(userFieldConfigs)
+        .set({ customBehaviors: filtered, updatedAt: new Date() })
+        .where(eq(userFieldConfigs.id, configId))
+        .returning();
+      return config || undefined;
+    }
   }
 }
 

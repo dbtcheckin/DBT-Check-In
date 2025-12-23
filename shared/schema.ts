@@ -15,6 +15,25 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export type CustomFieldConfig = {
+  id: string;
+  label: string;
+  type: "emotion" | "behavior";
+  scale?: { min: number; max: number };
+  createdAt: string;
+};
+
+export const userFieldConfigs = pgTable("user_field_configs", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  customEmotions: jsonb("custom_emotions").$type<CustomFieldConfig[]>().default([]),
+  customBehaviors: jsonb("custom_behaviors").$type<CustomFieldConfig[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type DiaryEntryActions = {
   self_harm_action?: boolean;
   lied?: number;
@@ -63,12 +82,20 @@ export const diaryEntries = pgTable("diary_entries", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   diaryEntries: many(diaryEntries),
+  fieldConfigs: one(userFieldConfigs),
 }));
 
 export const diaryEntriesRelations = relations(diaryEntries, ({ one }) => ({
   user: one(users),
+}));
+
+export const userFieldConfigsRelations = relations(userFieldConfigs, ({ one }) => ({
+  user: one(users, {
+    fields: [userFieldConfigs.userId],
+    references: [users.id],
+  }),
 }));
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -87,8 +114,16 @@ export const updateDiaryEntrySchema = createInsertSchema(diaryEntries).partial()
   createdAt: true,
 });
 
+export const insertUserFieldConfigSchema = createInsertSchema(userFieldConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type DiaryEntry = typeof diaryEntries.$inferSelect;
 export type InsertDiaryEntry = z.infer<typeof insertDiaryEntrySchema>;
 export type UpdateDiaryEntry = z.infer<typeof updateDiaryEntrySchema>;
+export type UserFieldConfig = typeof userFieldConfigs.$inferSelect;
+export type InsertUserFieldConfig = z.infer<typeof insertUserFieldConfigSchema>;

@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getDeviceId } from "@/hooks/useDeviceId";
 
 /**
  * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
@@ -30,10 +31,18 @@ export async function apiRequest<T = any>(
 ): Promise<T> {
   const baseUrl = getApiUrl();
   const url = new URL(route, baseUrl);
+  const deviceId = await getDeviceId();
+
+  const headers: Record<string, string> = {
+    "X-Device-ID": deviceId,
+  };
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -49,6 +58,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const baseUrl = getApiUrl();
+    const deviceId = await getDeviceId();
     
     const [path, params] = queryKey;
     let url: URL;
@@ -69,6 +79,9 @@ export const getQueryFn: <T>(options: {
 
     const res = await fetch(url, {
       credentials: "include",
+      headers: {
+        "X-Device-ID": deviceId,
+      },
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

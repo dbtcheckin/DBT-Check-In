@@ -294,6 +294,123 @@ Respond with valid JSON only:
     }
   });
 
+  // Custom field configs API
+  app.get("/api/field-configs", async (req, res) => {
+    try {
+      const deviceId = req.headers["x-device-id"] as string;
+      if (!deviceId) {
+        return res.status(400).json({ error: "X-Device-ID header required" });
+      }
+
+      let config = await storage.getUserFieldConfigs(deviceId);
+      if (!config) {
+        config = await storage.createUserFieldConfigs(deviceId);
+      }
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch field configs" });
+    }
+  });
+
+  app.post("/api/field-configs/emotion", async (req, res) => {
+    try {
+      const deviceId = req.headers["x-device-id"] as string;
+      if (!deviceId) {
+        return res.status(400).json({ error: "X-Device-ID header required" });
+      }
+
+      const { label } = req.body;
+      if (!label || typeof label !== "string") {
+        return res.status(400).json({ error: "Label is required" });
+      }
+
+      let config = await storage.getUserFieldConfigs(deviceId);
+      if (!config) {
+        config = await storage.createUserFieldConfigs(deviceId);
+      }
+
+      const fieldId = label.toLowerCase().replace(/\s+/g, "_");
+      const existingEmotions = config.customEmotions || [];
+      if (existingEmotions.some(e => e.id === fieldId)) {
+        return res.status(400).json({ error: "Custom emotion already exists" });
+      }
+
+      const newEmotion = {
+        id: fieldId,
+        label,
+        type: "emotion" as const,
+        scale: { min: 0, max: 5 },
+        createdAt: new Date().toISOString(),
+      };
+
+      const updatedConfig = await storage.addCustomEmotion(config.id, newEmotion);
+      res.json(updatedConfig);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add custom emotion" });
+    }
+  });
+
+  app.post("/api/field-configs/behavior", async (req, res) => {
+    try {
+      const deviceId = req.headers["x-device-id"] as string;
+      if (!deviceId) {
+        return res.status(400).json({ error: "X-Device-ID header required" });
+      }
+
+      const { label } = req.body;
+      if (!label || typeof label !== "string") {
+        return res.status(400).json({ error: "Label is required" });
+      }
+
+      let config = await storage.getUserFieldConfigs(deviceId);
+      if (!config) {
+        config = await storage.createUserFieldConfigs(deviceId);
+      }
+
+      const fieldId = label.toLowerCase().replace(/\s+/g, "_");
+      const existingBehaviors = config.customBehaviors || [];
+      if (existingBehaviors.some(b => b.id === fieldId)) {
+        return res.status(400).json({ error: "Custom behavior already exists" });
+      }
+
+      const newBehavior = {
+        id: fieldId,
+        label,
+        type: "behavior" as const,
+        createdAt: new Date().toISOString(),
+      };
+
+      const updatedConfig = await storage.addCustomBehavior(config.id, newBehavior);
+      res.json(updatedConfig);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add custom behavior" });
+    }
+  });
+
+  app.delete("/api/field-configs/:type/:fieldId", async (req, res) => {
+    try {
+      const deviceId = req.headers["x-device-id"] as string;
+      if (!deviceId) {
+        return res.status(400).json({ error: "X-Device-ID header required" });
+      }
+
+      const { type, fieldId } = req.params;
+      if (type !== "emotion" && type !== "behavior") {
+        return res.status(400).json({ error: "Invalid field type" });
+      }
+
+      const config = await storage.getUserFieldConfigs(deviceId);
+      if (!config) {
+        return res.status(404).json({ error: "Config not found" });
+      }
+
+      const updatedConfig = await storage.removeCustomField(config.id, fieldId, type);
+      res.json(updatedConfig);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove custom field" });
+    }
+  });
+
   // Audio transcription endpoint
   app.post("/api/transcribe", async (req, res) => {
     try {

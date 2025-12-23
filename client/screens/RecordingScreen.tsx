@@ -17,6 +17,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import LiveDiaryCard, { DiaryCardData } from "@/components/LiveDiaryCard";
@@ -24,6 +25,7 @@ import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { useWebRTC, ConversationMessage } from "@/hooks/useWebRTC";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
+import type { UserFieldConfig } from "@shared/schema";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -71,6 +73,7 @@ const emptyCardData: DiaryCardData = {
   actions: {},
   substances: {},
   skills: {},
+  behaviors: {},
 };
 
 export default function RecordingScreen() {
@@ -92,6 +95,37 @@ export default function RecordingScreen() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const cardDataRef = useRef<DiaryCardData>(emptyCardData);
+  const queryClient = useQueryClient();
+
+  const { data: fieldConfigs } = useQuery<UserFieldConfig>({
+    queryKey: ["/api/field-configs"],
+  });
+
+  const addEmotionMutation = useMutation({
+    mutationFn: async (label: string) => {
+      return apiRequest("POST", "/api/field-configs/emotion", { label });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
+    },
+  });
+
+  const addBehaviorMutation = useMutation({
+    mutationFn: async (label: string) => {
+      return apiRequest("POST", "/api/field-configs/behavior", { label });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
+    },
+  });
+
+  const handleAddCustomEmotion = (label: string) => {
+    addEmotionMutation.mutate(label);
+  };
+
+  const handleAddCustomBehavior = (label: string) => {
+    addBehaviorMutation.mutate(label);
+  };
 
   const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();
 
@@ -448,6 +482,33 @@ export default function RecordingScreen() {
       newGlow.add("substances.meds_prescribed");
     }
 
+    const customEmotions = fieldConfigs?.customEmotions || [];
+    customEmotions.forEach(emotion => {
+      const labelPattern = new RegExp(`\\b${emotion.label.toLowerCase().replace(/\s+/g, "\\s*")}\\b`, "i");
+      const match = text.match(labelPattern);
+      if (match && !newData.emotions[emotion.id]) {
+        const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
+        let val = parseContextNumber(ctx);
+        if (val === null) {
+          val = DETECTION_PATTERNS.intensity.high.test(ctx) ? 4 :
+            DETECTION_PATTERNS.intensity.medium.test(ctx) ? 3 : null;
+        }
+        newData.emotions[emotion.id] = { value: val, detected: true };
+        newGlow.add(`emotions.${emotion.id}`);
+        if (val === null) newUncertain.add(`emotions.${emotion.id}`);
+      }
+    });
+
+    const customBehaviors = fieldConfigs?.customBehaviors || [];
+    customBehaviors.forEach(behavior => {
+      const labelPattern = new RegExp(`\\b${behavior.label.toLowerCase().replace(/\s+/g, "\\s*")}\\b`, "i");
+      if (labelPattern.test(text) && !newData.behaviors?.[behavior.id]) {
+        if (!newData.behaviors) newData.behaviors = {};
+        newData.behaviors[behavior.id] = true;
+        newGlow.add(`behaviors.${behavior.id}`);
+      }
+    });
+
     cardDataRef.current = newData;
     setCardData(newData);
     if (newGlow.size > 0) {
@@ -455,7 +516,7 @@ export default function RecordingScreen() {
       setUncertainFields(newUncertain);
       setTimeout(() => setGlowingFields(new Set()), 800);
     }
-  }, []);
+  }, [fieldConfigs]);
 
   const handleTranscript = useCallback((text: string, isFinal: boolean) => {
     setTranscript(text);
@@ -645,6 +706,10 @@ export default function RecordingScreen() {
                 data={cardData}
                 glowingFields={glowingFields}
                 uncertainFields={uncertainFields}
+                customEmotions={fieldConfigs?.customEmotions || []}
+                customBehaviors={fieldConfigs?.customBehaviors || []}
+                onAddCustomEmotion={handleAddCustomEmotion}
+                onAddCustomBehavior={handleAddCustomBehavior}
               />
             </View>
           </ScrollView>

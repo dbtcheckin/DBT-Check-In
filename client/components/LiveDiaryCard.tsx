@@ -1,7 +1,10 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, Pressable, TextInput } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
+import { Accordion } from "@/components/Accordion";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
+import type { CustomFieldConfig } from "@shared/schema";
 
 export type DiaryCardData = {
   urges: Record<string, { value: number | null; detected?: boolean }>;
@@ -9,6 +12,7 @@ export type DiaryCardData = {
   actions: Record<string, { value: number | boolean | null; detected?: boolean }>;
   substances: Record<string, { value: string | null; detected?: boolean }>;
   skills: Record<string, { used: boolean; detected?: boolean }>;
+  behaviors: Record<string, boolean>;
   weeklySession?: {
     sessionUrges: Record<string, { value: number | null; detected?: boolean }>;
     beliefToRegulate: Record<string, { value: number | null; detected?: boolean }>;
@@ -150,14 +154,42 @@ type LiveDiaryCardProps = {
   data: DiaryCardData;
   glowingFields?: Set<string>;
   uncertainFields?: Set<string>;
+  customEmotions?: CustomFieldConfig[];
+  customBehaviors?: CustomFieldConfig[];
+  onAddCustomEmotion?: (label: string) => void;
+  onAddCustomBehavior?: (label: string) => void;
 };
 
-export default function LiveDiaryCard({ data, glowingFields = new Set(), uncertainFields = new Set() }: LiveDiaryCardProps) {
+export default function LiveDiaryCard({ 
+  data, 
+  glowingFields = new Set(), 
+  uncertainFields = new Set(),
+  customEmotions = [],
+  customBehaviors = [],
+  onAddCustomEmotion,
+  onAddCustomBehavior,
+}: LiveDiaryCardProps) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const [newEmotionLabel, setNewEmotionLabel] = useState("");
+  const [newBehaviorLabel, setNewBehaviorLabel] = useState("");
 
   const hasOptionalEmotions = OPTIONAL_EMOTIONS.some(
     (field) => data.emotions[field.id]?.value != null
   );
+
+  const handleAddEmotion = () => {
+    if (newEmotionLabel.trim() && onAddCustomEmotion) {
+      onAddCustomEmotion(newEmotionLabel.trim());
+      setNewEmotionLabel("");
+    }
+  };
+
+  const handleAddBehavior = () => {
+    if (newBehaviorLabel.trim() && onAddCustomBehavior) {
+      onAddCustomBehavior(newBehaviorLabel.trim());
+      setNewBehaviorLabel("");
+    }
+  };
 
   const hasWeeklyData = data.weeklySession && (
     Object.values(data.weeklySession.sessionUrges || {}).some(v => v?.value != null) ||
@@ -281,6 +313,79 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
           </View>
         ))}
       </View>
+
+      <View style={styles.divider} />
+
+      <Accordion title="Emotions (Optional)" defaultExpanded={false}>
+        <View style={styles.row}>
+          <View style={styles.column}>
+            <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
+            {OPTIONAL_EMOTIONS.map((field) => (
+              <FieldCell
+                key={field.id}
+                label={field.label}
+                value={data.emotions[field.id]?.value}
+                isGlowing={glowingFields.has(`emotions.${field.id}`)}
+                isUncertain={uncertainFields.has(`emotions.${field.id}`)}
+                color={data.emotions[field.id]?.value != null ? field.color : undefined}
+              />
+            ))}
+            {customEmotions.map((field) => (
+              <FieldCell
+                key={field.id}
+                label={field.label}
+                value={data.emotions[field.id]?.value}
+                isGlowing={glowingFields.has(`emotions.${field.id}`)}
+              />
+            ))}
+            {onAddCustomEmotion ? (
+              <View style={styles.addFieldRow}>
+                <TextInput
+                  style={styles.addFieldInput}
+                  value={newEmotionLabel}
+                  onChangeText={setNewEmotionLabel}
+                  placeholder="Add custom emotion..."
+                  placeholderTextColor={Colors.dark.textSecondary}
+                  onSubmitEditing={handleAddEmotion}
+                />
+                <Pressable onPress={handleAddEmotion} style={styles.addFieldButton}>
+                  <Feather name="plus" size={16} color={Colors.dark.textPrimary} />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.column}>
+            <ThemedText style={styles.subsectionTitle}>Behaviors</ThemedText>
+            {customBehaviors.map((field) => (
+              <FieldCell
+                key={field.id}
+                label={field.label}
+                value={data.behaviors?.[field.id] ? true : false}
+                type="boolean"
+                isGlowing={glowingFields.has(`behaviors.${field.id}`)}
+              />
+            ))}
+            {customBehaviors.length === 0 ? (
+              <ThemedText style={styles.emptyText}>No behaviors tracked yet</ThemedText>
+            ) : null}
+            {onAddCustomBehavior ? (
+              <View style={styles.addFieldRow}>
+                <TextInput
+                  style={styles.addFieldInput}
+                  value={newBehaviorLabel}
+                  onChangeText={setNewBehaviorLabel}
+                  placeholder="Add custom behavior..."
+                  placeholderTextColor={Colors.dark.textSecondary}
+                  onSubmitEditing={handleAddBehavior}
+                />
+                <Pressable onPress={handleAddBehavior} style={styles.addFieldButton}>
+                  <Feather name="plus" size={16} color={Colors.dark.textPrimary} />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </Accordion>
 
       {hasWeeklyData ? (
         <>
@@ -471,5 +576,31 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.dark.textSecondary,
     flex: 1,
+  },
+  addFieldRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    gap: 8,
+  },
+  addFieldInput: {
+    flex: 1,
+    backgroundColor: Colors.dark.backgroundTertiary,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 11,
+    color: Colors.dark.textPrimary,
+  },
+  addFieldButton: {
+    backgroundColor: Colors.dark.accent,
+    borderRadius: BorderRadius.sm,
+    padding: 6,
+  },
+  emptyText: {
+    fontSize: 10,
+    color: Colors.dark.textGhost,
+    fontStyle: "italic",
+    paddingVertical: 8,
   },
 });
