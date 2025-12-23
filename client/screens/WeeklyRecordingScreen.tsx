@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   },
   transcriptSection: {
     flex: 1,
-    maxHeight: 100,
+    minHeight: 60,
     backgroundColor: Colors.dark.backgroundDefault,
     borderRadius: BorderRadius.lg,
     padding: Spacing.sm,
