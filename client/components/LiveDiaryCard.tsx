@@ -316,7 +316,11 @@ export default function LiveDiaryCard({
 
       <View style={styles.divider} />
 
-      <Accordion title="Emotions (Optional)" defaultExpanded={false}>
+      <Accordion 
+        title="Custom Emotions & Behaviors (OPTIONAL)" 
+        defaultExpanded={false}
+        titleStyle={styles.headerText}
+      >
         <View style={styles.row}>
           <View style={styles.column}>
             <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
@@ -349,7 +353,7 @@ export default function LiveDiaryCard({
                   onSubmitEditing={handleAddEmotion}
                 />
                 <Pressable onPress={handleAddEmotion} style={styles.addFieldButton}>
-                  <Feather name="plus" size={16} color={Colors.dark.textPrimary} />
+                  <Feather name="plus" size={16} color={Colors.dark.text} />
                 </Pressable>
               </View>
             ) : null}
@@ -379,7 +383,7 @@ export default function LiveDiaryCard({
                   onSubmitEditing={handleAddBehavior}
                 />
                 <Pressable onPress={handleAddBehavior} style={styles.addFieldButton}>
-                  <Feather name="plus" size={16} color={Colors.dark.textPrimary} />
+                  <Feather name="plus" size={16} color={Colors.dark.text} />
                 </Pressable>
               </View>
             ) : null}
@@ -590,7 +594,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     fontSize: 11,
-    color: Colors.dark.textPrimary,
+    color: Colors.dark.text,
   },
   addFieldButton: {
     backgroundColor: Colors.dark.accent,

@@ -19,6 +19,7 @@ interface AccordionProps {
   defaultExpanded?: boolean;
   children: React.ReactNode;
   style?: ViewStyle;
+  titleStyle?: object;
 }
 
 const springConfig = {
@@ -32,6 +33,7 @@ export function Accordion({
   defaultExpanded = false,
   children,
   style,
+  titleStyle,
 }: AccordionProps) {
   const { theme } = useTheme();
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -80,7 +82,7 @@ export function Accordion({
             { backgroundColor: theme.backgroundSecondary },
           ]}
         >
-          <ThemedText type="caption" style={styles.headerText}>
+          <ThemedText type="caption" style={[styles.headerText, titleStyle]}>
             {title}
           </ThemedText>
           <Animated.View style={chevronAnimatedStyle}>
