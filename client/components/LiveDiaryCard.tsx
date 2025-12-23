@@ -363,14 +363,6 @@ export default function LiveDiaryCard({
         title="Custom Emotions & Behaviors (OPTIONAL)" 
         defaultExpanded={false}
         titleStyle={styles.headerText}
-        headerRight={(customEmotions.length > 0 || customBehaviors.length > 0) ? (
-          <Pressable 
-            onPress={(e) => { e.stopPropagation(); setIsEditMode(!isEditMode); }} 
-            style={styles.editToggle}
-          >
-            <Feather name={isEditMode ? "check" : "edit-2"} size={12} color={Colors.dark.textSecondary} />
-          </Pressable>
-        ) : undefined}
       >
         <View style={styles.row}>
           <View style={styles.column}>
@@ -460,7 +452,14 @@ export default function LiveDiaryCard({
             ) : null}
           </View>
           <View style={styles.column}>
-            <ThemedText style={styles.subsectionTitle}>Behaviors</ThemedText>
+            <View style={styles.sectionTitleRow}>
+              <ThemedText style={styles.subsectionTitle}>Behaviors</ThemedText>
+              {(customEmotions.length > 0 || customBehaviors.length > 0) ? (
+                <Pressable onPress={() => setIsEditMode(!isEditMode)} style={styles.editToggle}>
+                  <Feather name={isEditMode ? "check" : "edit-2"} size={12} color={Colors.dark.textSecondary} />
+                </Pressable>
+              ) : null}
+            </View>
             {customBehaviors.map((field) => (
               <FieldCell
                 key={field.id}
