@@ -726,70 +726,80 @@ export default function RecordingScreen() {
         </View>
       ) : (
         <View style={styles.content}>
-          <View style={styles.cardContainer}>
-            <LiveDiaryCard
-              data={cardData}
-              glowingFields={glowingFields}
-              uncertainFields={uncertainFields}
-              customEmotions={fieldConfigs?.customEmotions || []}
-              customBehaviors={fieldConfigs?.customBehaviors || []}
-              onAddCustomEmotion={handleAddCustomEmotion}
-              onAddCustomBehavior={handleAddCustomBehavior}
-              onDeleteCustomEmotion={handleDeleteCustomEmotion}
-              onDeleteCustomBehavior={handleDeleteCustomBehavior}
-            />
-          </View>
+          <ScrollView
+            style={styles.mainScrollView}
+            contentContainerStyle={[
+              styles.mainScrollContent,
+              { paddingBottom: 80 + insets.bottom }
+            ]}
+            showsVerticalScrollIndicator={true}
+          >
+            <View style={styles.cardContainer}>
+              <LiveDiaryCard
+                data={cardData}
+                glowingFields={glowingFields}
+                uncertainFields={uncertainFields}
+                customEmotions={fieldConfigs?.customEmotions || []}
+                customBehaviors={fieldConfigs?.customBehaviors || []}
+                onAddCustomEmotion={handleAddCustomEmotion}
+                onAddCustomBehavior={handleAddCustomBehavior}
+                onDeleteCustomEmotion={handleDeleteCustomEmotion}
+                onDeleteCustomBehavior={handleDeleteCustomBehavior}
+              />
+            </View>
 
-          <View style={styles.transcriptSection}>
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.transcriptScroll}
-              onContentSizeChange={() =>
-                scrollViewRef.current?.scrollToEnd({ animated: true })
-              }
-            >
-              {messages.length > 0 ? (
-                messages.map((message) => (
-                  <View key={message.id} style={styles.messageContainer}>
-                    <View style={[
-                      styles.speakerBadge,
-                      message.speaker === "user" ? styles.userBadge : styles.aiBadge
-                    ]}>
-                      <Feather 
-                        name={message.speaker === "user" ? "user" : "cpu"} 
-                        size={10} 
-                        color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
-                      />
-                      <ThemedText style={[
-                        styles.speakerLabel,
-                        message.speaker === "user" ? styles.userLabel : styles.aiLabel
+            <View style={styles.transcriptSection}>
+              <ScrollView
+                ref={scrollViewRef}
+                style={styles.transcriptScroll}
+                nestedScrollEnabled={true}
+                onContentSizeChange={() =>
+                  scrollViewRef.current?.scrollToEnd({ animated: true })
+                }
+              >
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <View key={message.id} style={styles.messageContainer}>
+                      <View style={[
+                        styles.speakerBadge,
+                        message.speaker === "user" ? styles.userBadge : styles.aiBadge
                       ]}>
-                        {message.speaker === "user" ? "You" : "AI"}
+                        <Feather 
+                          name={message.speaker === "user" ? "user" : "cpu"} 
+                          size={10} 
+                          color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
+                        />
+                        <ThemedText style={[
+                          styles.speakerLabel,
+                          message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                        ]}>
+                          {message.speaker === "user" ? "You" : "AI"}
+                        </ThemedText>
+                      </View>
+                      <ThemedText
+                        style={[
+                          styles.messageText,
+                          !message.isFinal && styles.messageStreaming,
+                        ]}
+                        fontFamily="serif"
+                      >
+                        {message.text}
+                        {!message.isFinal && isRecording ? (
+                          <ThemedText style={styles.cursor}>|</ThemedText>
+                        ) : null}
                       </ThemedText>
                     </View>
-                    <ThemedText
-                      style={[
-                        styles.messageText,
-                        !message.isFinal && styles.messageStreaming,
-                      ]}
-                      fontFamily="serif"
-                    >
-                      {message.text}
-                      {!message.isFinal && isRecording ? (
-                        <ThemedText style={styles.cursor}>|</ThemedText>
-                      ) : null}
-                    </ThemedText>
-                  </View>
-                ))
-              ) : (
-                <ThemedText style={[styles.transcript, styles.transcriptPlaceholder]} fontFamily="serif">
-                  Speak about your day...
-                </ThemedText>
-              )}
-            </ScrollView>
-          </View>
+                  ))
+                ) : (
+                  <ThemedText style={[styles.transcript, styles.transcriptPlaceholder]} fontFamily="serif">
+                    Speak about your day...
+                  </ThemedText>
+                )}
+              </ScrollView>
+            </View>
+          </ScrollView>
 
-          <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
+          <View style={[styles.footer, { bottom: insets.bottom + Spacing.md }]}>
             <Pressable
               onPress={isRecording ? stopRecording : startRecording}
               disabled={connectionState === "connecting"}
@@ -859,7 +869,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  mainScrollView: {
+    flex: 1,
+  },
+  mainScrollContent: {
     padding: 14,
+    flexGrow: 1,
   },
   processingContainer: {
     flex: 1,
@@ -934,6 +950,9 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   footer: {
+    position: "absolute",
+    left: 14,
+    right: 14,
     paddingTop: Spacing.sm,
   },
   doneButton: {
