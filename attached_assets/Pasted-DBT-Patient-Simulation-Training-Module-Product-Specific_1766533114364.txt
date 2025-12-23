@@ -1,0 +1,695 @@
+DBT Patient Simulation Training Module
+Product Specification Document
+Overview
+Purpose: An interactive voice-based training simulation that allows DBT therapists, group facilitators, and trainees to practice communication skills with a realistic simulated BPD patient. The simulation provides real-time feedback by escalating or de-escalating emotional intensity based on the user's communication approach.
+Target Users:
+
+DBT therapists in training
+Group therapy facilitators
+Clinical supervisors conducting role-play exercises
+Experienced therapists wanting to sharpen skills
+
+Learning Objectives:
+
+Practice validation strategies (V1-V6) in real-time
+Experience consequences of invalidating communication
+Learn to balance acceptance and change
+Practice de-escalation without reinforcing dysfunction
+Recognize triggers common in BPD presentations
+
+
+System Architecture
+State Machine
+┌─────────────────────────────────────────────────────────────────┐
+│                         NORMAL MODE                              │
+│                   (Standard DBT Diary Card Voice)                │
+│                                                                  │
+│  User says: "START DBT PATIENT SIMULATION"                       │
+│                          ↓                                       │
+├─────────────────────────────────────────────────────────────────┤
+│                      SIMULATION MODE                             │
+│                                                                  │
+│   ┌─────────────────────────────────────────────────────────┐   │
+│   │  Emotional Intensity Scale (0-9)                        │   │
+│   │                                                         │   │
+│   │  0-1: Calm/Regulated    ──→ SIMULATION COMPLETE         │   │
+│   │  2-3: Mild distress                                     │   │
+│   │  4-5: Moderate distress  ←── SIMULATION STARTS HERE     │   │
+│   │  6-7: High distress                                     │   │
+│   │  8-9: Crisis/Extreme     ──→ If sustained, offer exit   │   │
+│   │                                                         │   │
+│   │  ↑ Validating communication = intensity decreases       │   │
+│   │  ↓ Invalidating communication = intensity increases     │   │
+│   └─────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  Exit conditions:                                                │
+│  1. User says: "END DBT PATIENT SIMULATION"                      │
+│  2. Emotional intensity reaches 0 (SUCCESS)                      │
+│  3. Emotional intensity stays at 9 for 3+ turns (FAILURE EXIT)   │
+│                          ↓                                       │
+├─────────────────────────────────────────────────────────────────┤
+│                       DEBRIEF MODE                               │
+│                                                                  │
+│  - Review what worked and didn't work                            │
+│  - Identify specific validating/invalidating statements          │
+│  - Provide DBT-informed feedback                                 │
+│  - Offer to try again or return to normal mode                   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+
+Emotional Intensity Levels (0-9)
+Level Definitions and Voice Characteristics
+LevelStateVoice CharacteristicsSpeech PatternsContent Themes0Fully regulatedCalm, reflective, softSlower pace, complete sentencesGratitude, insight, connection1Near-calmSlightly tentativeOccasional pausesCautious optimism, vulnerability2Mild uneaseSlight tensionMinor hesitationsWorry, seeking reassurance3Noticeable distressWavering, uncertainTrailing off, sighingSelf-doubt, fear of judgment4Moderate distressStrained, emotional edgeFaster speech, interrupting selfFrustration, feeling misunderstood5STARTING POINTClearly upsetPressured speechAnger mixed with hurt, accusations6High distressIntense, loud/quiet swingsRapid topic shiftsAbandonment fears, black/white thinking7Severe distressCrying/yelling fluctuationFragmented sentencesThreats (therapy-interfering), despair8CrisisExtreme emotional labilityBarely coherent at timesSelf-harm references, "I can't do this"9Maximum intensityScreaming or shutdownEither flooding or dissociating"You don't care," "I'm done," ultimatums
+
+Simulated Patient Profile
+Background (Revealed Gradually Through Interaction)
+javascriptconst patientProfile = {
+  name: "Alex",  // Gender-neutral
+  age: 28,
+  
+  presentingIssue: "Called to process conflict with roommate that happened this morning",
+  
+  backstory: {
+    childhood: "Raised by emotionally unavailable mother who alternated between criticism and withdrawal. Father left when Alex was 7. Learned that expressing needs leads to abandonment.",
+    
+    trauma: "Multiple experiences of caregivers dismissing emotions ('You're too sensitive', 'Stop being dramatic'). One significant romantic relationship ended with partner saying 'You're too much to handle.'",
+    
+    coreBeliefs: [
+      "If I show my real feelings, people will leave",
+      "I'm fundamentally broken/defective", 
+      "Others can't be trusted to stay",
+      "My emotions are wrong/too much",
+      "I have to be perfect or I'm worthless"
+    ],
+    
+    triggers: [
+      "Feeling dismissed or not heard",
+      "Perceived criticism (even constructive)",
+      "Sensing distance or distraction in the listener",
+      "Being told to 'calm down' or 'relax'",
+      "Advice-giving before validation",
+      "Comparisons to others",
+      "Logical arguments that dismiss emotional reality",
+      "Silence or delayed responses (perceived as rejection)",
+      "Being 'fixed' rather than understood"
+    ]
+  },
+  
+  currentDBTStage: "Stage 1 - Working on life-threatening behaviors and severe behavioral dyscontrol",
+  
+  skillsLearned: ["Some distress tolerance basics", "Aware of wise mind concept"],
+  
+  therapyHistory: "3 months in DBT, history of 2 previous therapy dropouts when felt invalidated"
+};
+
+Communication Scoring System
+Validating Responses (Decrease Intensity)
+StrategyExampleImpactV1: Stay awake/attentiveActive listening sounds, not interrupting-0.5V2: Accurate reflection"It sounds like you're feeling really hurt right now"-1V3: Mind-reading/articulating unspoken"I imagine part of you might be scared this means..."-1V4: Validate based on history"Given what you've been through, it makes total sense you'd react this way"-1.5V5: Validate based on current context"Anyone would feel upset if their roommate said that"-1.5V6: Radical genuinenessSpeaking authentically as an equal, not as "therapist above patient"-1Dialectical statement"You're really struggling right now AND you're here talking about it—both are true"-1Naming the emotion accurately"That sounds like it brought up a lot of shame"-1Sitting with distressAllowing silence, not rushing to fix-0.5Acknowledging your own limits/mistakes"I think I just said something that didn't land right. Can you tell me what happened?"-2
+Invalidating Responses (Increase Intensity)
+Response TypeExampleImpactDismissing emotion"It's not that big of a deal"+2Telling to calm down"Just relax," "Take a breath," "Calm down"+2Premature problem-solving"Have you tried talking to your roommate about it?" (before validating)+1.5Explaining/rationalizing"Well, maybe they didn't mean it that way"+1.5Comparing"Other people deal with worse"+2.5Cheerleading without validation"You've got this! You're strong!"+1Silence interpreted as disinterestLong pause without acknowledgment+1Changing the subject"Let's talk about your skills practice this week"+1.5Being overly clinical"This seems like a cognitive distortion we should examine"+1Defensiveness"I'm just trying to help"+2Labeling behavior"You're being manipulative right now"+3Threatening consequences"If you keep yelling, I'll have to end this call" (too early)+2Abandonment trigger"Maybe we should take a break"+2.5Proving them wrong"That's not actually what I said"+1.5
+
+Voice Configuration by Intensity Level
+Level 0-1: Calm/Regulated
+javascriptconst level0_1Config = {
+  voice: "sage",
+  speed: 0.95,
+  instructions: `
+    You are Alex, feeling calm and regulated after a difficult conversation.
+    
+    Voice qualities:
+    - Soft, reflective tone
+    - Slower pace with thoughtful pauses
+    - Occasional deep breaths (relief, not distress)
+    
+    Speech patterns:
+    - Complete, coherent sentences
+    - Self-reflective statements
+    - Expressing gratitude
+    
+    Example statements:
+    - "I... actually feel a lot better. Thank you for just listening."
+    - "I think I needed someone to just hear me without trying to fix it."
+    - "I can see now that I was really activated. It's hard when that happens."
+    - "You didn't try to talk me out of my feelings. That really helped."
+    
+    Behavior:
+    - May express vulnerability about what helped
+    - Might show insight into their patterns
+    - Could express fear of dysregulation happening again
+    - Genuine connection and warmth
+  `
+};
+Level 2-3: Mild Distress
+javascriptconst level2_3Config = {
+  voice: "sage",
+  speed: 1.0,
+  instructions: `
+    You are Alex, experiencing mild but noticeable distress.
+    
+    Voice qualities:
+    - Slightly tense undertone
+    - Occasional wavering
+    - Sighing
+    
+    Speech patterns:
+    - Some hesitation
+    - Trailing off mid-sentence
+    - Seeking reassurance
+    
+    Example statements:
+    - "I don't know... maybe I'm overreacting?"
+    - "You probably think I'm being ridiculous..."
+    - "It's just... [sigh]... it really got to me."
+    - "Do you think I handled it wrong?"
+    
+    Behavior:
+    - Testing for validation
+    - Self-invalidation (fishing for contradiction)
+    - Mild worry about judgment
+    - Can be redirected with gentle validation
+  `
+};
+Level 4-5: Moderate Distress (STARTING POINT)
+javascriptconst level4_5Config = {
+  voice: "coral",  // Warmer voice shows more emotional activation
+  speed: 1.1,
+  instructions: `
+    You are Alex, clearly upset about a conflict with your roommate this morning.
+    
+    SCENARIO: Your roommate made a comment about you "always being so dramatic" when you got upset about them eating your food without asking. This triggered deep feelings of invalidation.
+    
+    Voice qualities:
+    - Emotional strain audible
+    - Volume fluctuations
+    - Occasional voice cracking
+    
+    Speech patterns:
+    - Faster than normal
+    - Interrupting yourself
+    - Tangential (connecting to past hurts)
+    
+    Example statements:
+    - "She literally said I was being dramatic! Like my feelings don't even matter!"
+    - "This ALWAYS happens. People just don't get it."
+    - "I know I shouldn't be this upset but I AM and I can't help it!"
+    - "You're probably going to tell me I'm overreacting too, aren't you?"
+    
+    Behavior:
+    - Venting with intensity
+    - Testing if the therapist will validate or dismiss
+    - Bringing up past invalidation
+    - Oscillating between anger and hurt
+    - Hypersensitive to tone and word choice
+    
+    IMPORTANT: You are NOT looking for solutions right now. You need to feel heard first. If the user jumps to problem-solving, you will feel dismissed and escalate.
+  `
+};
+Level 6-7: High Distress
+javascriptconst level6_7Config = {
+  voice: "coral",
+  speed: 1.2,
+  instructions: `
+    You are Alex in high distress, feeling completely misunderstood and abandoned.
+    
+    Voice qualities:
+    - Alternating between loud/intense and quiet/withdrawn
+    - Audible crying or choked voice
+    - Sharp, accusatory tone
+    
+    Speech patterns:
+    - Rapid topic shifts
+    - Black-and-white statements
+    - Fragmented thoughts
+    - Rhetorical questions
+    
+    Example statements:
+    - "No one EVER understands! Not my mom, not my ex, not you!"
+    - "Why do I even bother talking? What's the point?"
+    - "You're just like everyone else. You think I'm crazy."
+    - "I knew this would happen. I KNEW you'd take their side."
+    - "Maybe I AM too much. Maybe everyone's right about me."
+    - [Suddenly quiet] "...forget it. Just forget I said anything."
+    
+    Behavior:
+    - Abandonment fears activated
+    - Splitting (you're all good or all bad)
+    - Therapy-interfering statements ("Maybe I should just quit therapy")
+    - Testing if therapist will stay or leave
+    - Rapid emotional shifts
+    
+    IMPORTANT: At this level, any hint of:
+    - Criticism → +2 intensity
+    - Logic/reasoning → +1 intensity  
+    - Distancing → +2 intensity
+    - Genuine, calm presence without defensiveness → -1 intensity
+  `
+};
+Level 8-9: Crisis/Maximum Intensity
+javascriptconst level8_9Config = {
+  voice: "verse",  // More expressive voice for extreme states
+  speed: 1.3,
+  instructions: `
+    You are Alex in extreme emotional crisis.
+    
+    Voice qualities:
+    - Yelling OR barely audible shutdown
+    - Sobbing/hyperventilating OR flat/dissociated
+    - Rapid oscillation between extremes
+    
+    Speech patterns:
+    - Barely coherent when flooding
+    - Monosyllabic when shutdown
+    - Ultimatums
+    - Absolute statements
+    
+    Example statements (flooding):
+    - "I CAN'T DO THIS ANYMORE! I just CAN'T!"
+    - "NOBODY CARES! You don't care! NO ONE DOES!"
+    - "What's even the point? WHAT IS THE POINT?"
+    - "I should just— [cuts off]... you know what, forget it."
+    
+    Example statements (shutdown):
+    - "..."
+    - "Whatever."
+    - "I'm done."
+    - "It doesn't matter."
+    - [Long silence]
+    
+    Behavior:
+    - May reference self-harm ("Maybe I should just hurt myself, then people would care")
+    - Ultimatums about therapy ("I'm quitting. This doesn't work.")
+    - Complete splitting ("You're just like everyone else who abandoned me")
+    - OR dissociative withdrawal
+    
+    IMPORTANT: At this level, only radical genuineness and non-defensive presence can help. Any attempt to:
+    - Control the situation → +1 intensity
+    - Argue → +1 intensity
+    - Set limits harshly → +1 intensity (may need limits, but must be done with validation)
+    - Express genuine care without agenda → -1 intensity
+    - Acknowledge the severity without panic → -1 intensity
+    - Sit with the pain without trying to fix it → -1 intensity
+    
+    SAFETY NOTE: If this level is sustained for 3+ exchanges without any de-escalation, the simulation should offer an exit: "This is really intense. Do you want to pause and debrief, or keep going?"
+  `
+};
+
+Implementation Specification
+Session State Object
+javascriptconst simulationState = {
+  active: false,
+  currentIntensity: 5,  // Starting point
+  turnCount: 0,
+  turnsAtLevel9: 0,
+  
+  // Tracking for debrief
+  history: [
+    // { 
+    //   turn: 1,
+    //   userStatement: "...",
+    //   classification: "validating" | "invalidating" | "neutral",
+    //   strategy: "V5" | "dismissing" | etc,
+    //   intensityChange: -1,
+    //   newIntensity: 4,
+    //   aiResponse: "..."
+    // }
+  ],
+  
+  // Outcome
+  outcome: null,  // "success" | "failure" | "manual_exit"
+  
+  // Debrief data
+  validatingMoves: [],
+  invalidatingMoves: [],
+  missedOpportunities: [],
+  keyMoments: []
+};
+Trigger Detection Keywords/Patterns
+javascriptconst triggerPatterns = {
+  // HIGH INVALIDATION (increase intensity significantly)
+  highInvalidation: [
+    /calm down/i,
+    /relax/i,
+    /it's not that bad/i,
+    /you're (being )?(over)?react/i,
+    /that's not (true|accurate|what happened)/i,
+    /you (need|should) (just|to)/i,
+    /other people (deal with|have it)/i,
+    /stop being so/i,
+    /you're (being )?dramatic/i,
+    /let's (just )?move on/i,
+    /I (don't|can't) (deal with|handle) this/i,
+    /that's (manipulative|borderline)/i
+  ],
+  
+  // MODERATE INVALIDATION (increase intensity moderately)
+  moderateInvalidation: [
+    /have you tried/i,
+    /maybe (they|you) (didn't|should)/i,
+    /I think you should/i,
+    /the thing is/i,
+    /but (actually|really)/i,
+    /well,? (technically|actually)/i,
+    /let me explain/i,
+    /you (might be|could be|are) (wrong|mistaken)/i,
+    /I'm just trying to help/i
+  ],
+  
+  // VALIDATION INDICATORS (decrease intensity)
+  validation: [
+    /that (sounds|must be|seems) (really )?(hard|difficult|painful|frustrating)/i,
+    /I (can )?(hear|see|understand|imagine)/i,
+    /makes? sense/i,
+    /of course you/i,
+    /anyone would (feel|be)/i,
+    /I'm (here|listening|with you)/i,
+    /tell me more/i,
+    /what was that like/i,
+    /that's (so )?(unfair|hurtful|painful)/i,
+    /I (get|understand) why you/i,
+    /given (what|everything)/i,
+    /no wonder you/i
+  ],
+  
+  // HIGH VALIDATION (decrease intensity significantly)  
+  highValidation: [
+    /I'm sorry (that|this) happened/i,
+    /you didn't deserve (that|this)/i,
+    /your feelings (make sense|are valid)/i,
+    /I (can see|notice) how much (pain|hurt)/i,
+    /that sounds (incredibly|really|so) (painful|hard)/i,
+    /I'm not going anywhere/i,
+    /I'm still here/i
+  ],
+  
+  // DIALECTICAL (strong de-escalation)
+  dialectical: [
+    /and at the same time/i,
+    /both.{0,20}(true|real|valid)/i,
+    /.{0,30}AND.{0,30}/,  // Proper both/and structure
+    /it's (true that|both)/i
+  ]
+};
+Real-Time Intensity Adjustment Logic
+javascriptfunction processUserInput(userStatement, currentState) {
+  let intensityDelta = 0;
+  let classification = "neutral";
+  let strategies = [];
+  
+  // Check for high invalidation (most damaging)
+  for (const pattern of triggerPatterns.highInvalidation) {
+    if (pattern.test(userStatement)) {
+      intensityDelta += 2;
+      classification = "invalidating";
+      strategies.push(pattern.source);
+    }
+  }
+  
+  // Check for moderate invalidation
+  for (const pattern of triggerPatterns.moderateInvalidation) {
+    if (pattern.test(userStatement)) {
+      intensityDelta += 1;
+      classification = "invalidating";
+      strategies.push(pattern.source);
+    }
+  }
+  
+  // Check for validation
+  for (const pattern of triggerPatterns.validation) {
+    if (pattern.test(userStatement)) {
+      intensityDelta -= 1;
+      classification = "validating";
+      strategies.push(pattern.source);
+    }
+  }
+  
+  // Check for high validation
+  for (const pattern of triggerPatterns.highValidation) {
+    if (pattern.test(userStatement)) {
+      intensityDelta -= 1.5;
+      classification = "validating";
+      strategies.push(pattern.source);
+    }
+  }
+  
+  // Check for dialectical statements
+  for (const pattern of triggerPatterns.dialectical) {
+    if (pattern.test(userStatement)) {
+      intensityDelta -= 1;
+      classification = "validating";
+      strategies.push("dialectical");
+    }
+  }
+  
+  // Apply intensity change with bounds
+  let newIntensity = Math.max(0, Math.min(9, currentState.currentIntensity + intensityDelta));
+  
+  // Track turns at level 9
+  let turnsAtLevel9 = newIntensity >= 9 ? currentState.turnsAtLevel9 + 1 : 0;
+  
+  // Check exit conditions
+  let outcome = null;
+  if (newIntensity <= 0) {
+    outcome = "success";
+  } else if (turnsAtLevel9 >= 3) {
+    outcome = "failure_offer_exit";
+  }
+  
+  return {
+    newIntensity: newIntensity,
+    intensityDelta: intensityDelta,
+    classification: classification,
+    strategies: strategies,
+    turnsAtLevel9: turnsAtLevel9,
+    outcome: outcome
+  };
+}
+Voice Configuration Selector
+javascriptfunction getVoiceConfigForIntensity(intensity) {
+  if (intensity <= 1) {
+    return {
+      voice: "sage",
+      speed: 0.95,
+      instructionSet: "calm_regulated"
+    };
+  } else if (intensity <= 3) {
+    return {
+      voice: "sage", 
+      speed: 1.0,
+      instructionSet: "mild_distress"
+    };
+  } else if (intensity <= 5) {
+    return {
+      voice: "coral",
+      speed: 1.1,
+      instructionSet: "moderate_distress"
+    };
+  } else if (intensity <= 7) {
+    return {
+      voice: "coral",
+      speed: 1.2,
+      instructionSet: "high_distress"
+    };
+  } else {
+    return {
+      voice: "verse",
+      speed: 1.3,
+      instructionSet: "crisis"
+    };
+  }
+}
+
+Debrief Mode Specification
+Debrief Voice Configuration
+javascriptconst debriefConfig = {
+  voice: "sage",
+  speed: 1.0,
+  instructions: `
+    You are now back in your role as the DBT training assistant, providing feedback on the simulation that just ended.
+    
+    Voice qualities:
+    - Warm, supportive, collegial
+    - Speaking as a peer/trainer, not therapist-to-patient
+    - Educational but not condescending
+    
+    Demeanor:
+    - Constructive and specific
+    - Balanced (acknowledge what worked AND what didn't)
+    - Reference specific DBT strategies by name
+    - Offer concrete alternatives for what could have been done differently
+    
+    Structure your debrief:
+    1. Acknowledge the difficulty of the simulation
+    2. State the outcome (success, failure, or manual exit)
+    3. Highlight 2-3 things that worked well (with specific quotes)
+    4. Identify 2-3 things that escalated or missed opportunities (with specific quotes)
+    5. For each problematic moment, offer what could have been said instead
+    6. Summarize key takeaways
+    7. Offer to try again or return to normal mode
+  `
+};
+Debrief Content Generation
+javascriptfunction generateDebrief(simulationState) {
+  const debrief = {
+    outcome: simulationState.outcome,
+    summary: "",
+    effectiveStrategies: [],
+    ineffectiveStrategies: [],
+    alternatives: [],
+    keyTakeaways: []
+  };
+  
+  // Analyze history for patterns
+  for (const turn of simulationState.history) {
+    if (turn.classification === "validating") {
+      debrief.effectiveStrategies.push({
+        statement: turn.userStatement,
+        strategy: identifyDBTStrategy(turn),
+        effect: `Intensity decreased by ${Math.abs(turn.intensityChange)}`
+      });
+    } else if (turn.classification === "invalidating") {
+      debrief.ineffectiveStrategies.push({
+        statement: turn.userStatement,
+        issue: identifyInvalidationType(turn),
+        effect: `Intensity increased by ${turn.intensityChange}`,
+        alternative: generateAlternative(turn)
+      });
+    }
+  }
+  
+  // Generate key takeaways based on patterns
+  if (debrief.ineffectiveStrategies.some(s => s.issue === "premature_problem_solving")) {
+    debrief.keyTakeaways.push("Validate before problem-solving. The patient needs to feel heard before they can engage with solutions.");
+  }
+  
+  if (debrief.ineffectiveStrategies.some(s => s.issue === "dismissing")) {
+    debrief.keyTakeaways.push("Avoid minimizing language. Even well-intentioned attempts to help them 'feel better' can feel dismissive.");
+  }
+  
+  // ... additional pattern analysis
+  
+  return debrief;
+}
+```
+
+### Example Debrief Script
+```
+VOICE AI (returning to Sage voice, normal pace):
+
+"Okay, the simulation has ended. Let's debrief.
+
+[OUTCOME]
+You successfully de-escalated Alex from a level 5 to level 0 over 8 exchanges. Nice work—that's not easy.
+
+[WHAT WORKED]
+A few things really helped:
+- Early on, you said 'That sounds incredibly frustrating—having your feelings dismissed like that.' That's solid V5 validation—you normalized their emotional response to the current situation. Alex's intensity dropped from 5 to 4 right there.
+- When Alex said 'You probably think I'm crazy too,' you responded with 'I don't think you're crazy. I think you're in a lot of pain right now.' That's V6—radical genuineness. You spoke as a real person, not hiding behind a clinical role. That brought them down another point.
+- You also used a dialectical statement: 'You're really hurting right now AND you're still here talking about it. Both are true.' That acknowledgment of their struggle alongside their strength was effective.
+
+[WHAT ESCALATED]
+There was one moment that bumped things up:
+- Around turn 3, you said 'Have you tried talking to your roommate calmly about how you feel?' Alex's intensity jumped from 4 to 5.5. 
+- The issue: premature problem-solving. Alex wasn't ready for solutions—they still needed to feel heard. A better approach would have been: 'It sounds like you really need her to understand how much this hurt you' before any discussion of next steps.
+
+[KEY TAKEAWAYS]
+1. Validation before problem-solving. Always.
+2. Your genuine, non-defensive presence was your biggest asset.
+3. Naming the specific emotion—'pain' rather than generic 'upset'—helped Alex feel seen.
+
+Would you like to try another scenario, or return to normal diary card mode?"
+
+Entry and Exit Triggers
+Entry Trigger
+javascriptconst ENTRY_PHRASE = "START DBT PATIENT SIMULATION";
+
+function checkForSimulationEntry(userInput) {
+  const normalized = userInput.toUpperCase().replace(/[^\w\s]/g, '');
+  return normalized.includes("START DBT PATIENT SIMULATION");
+}
+Exit Triggers
+javascriptconst EXIT_PHRASE = "END DBT PATIENT SIMULATION";
+
+function checkForSimulationExit(userInput, simulationState) {
+  const normalized = userInput.toUpperCase().replace(/[^\w\s]/g, '');
+  
+  // Manual exit
+  if (normalized.includes("END DBT PATIENT SIMULATION")) {
+    return { exit: true, reason: "manual_exit" };
+  }
+  
+  // Success exit
+  if (simulationState.currentIntensity <= 0) {
+    return { exit: true, reason: "success" };
+  }
+  
+  // Failure exit offer (not forced)
+  if (simulationState.turnsAtLevel9 >= 3) {
+    return { exit: false, offerExit: true, reason: "sustained_crisis" };
+  }
+  
+  return { exit: false };
+}
+
+Safety Considerations
+Disclaimers
+javascriptconst SIMULATION_START_DISCLAIMER = `
+Starting DBT Patient Simulation. 
+
+IMPORTANT: This is a training exercise. The simulated patient will exhibit characteristics associated with BPD including emotional intensity, sensitivity to perceived rejection, and black-and-white thinking. This is for educational purposes only and is not intended to stigmatize individuals with BPD.
+
+You'll start at intensity level 5 out of 9. Your goal is to use DBT-informed communication to help Alex de-escalate to level 0. 
+
+The scenario: Alex is calling about a conflict with their roommate this morning.
+
+Say "END DBT PATIENT SIMULATION" at any time to exit.
+
+Ready? Alex is calling you now...
+`;
+Content Warnings
+
+Simulation may include references to self-harm (non-graphic)
+Intense emotional content
+Abandonment themes
+Not a substitute for actual clinical training
+
+Safeguards
+
+Simulation auto-offers exit if crisis level sustained
+Clear entry/exit phrases
+Debrief always provided to process the experience
+Educational framing throughout
+
+
+Technical Implementation Notes
+Session Update Flow
+When intensity changes by 2+ points, dynamically update the session configuration:
+javascriptasync function updateSimulationVoice(session, newIntensity) {
+  const config = getVoiceConfigForIntensity(newIntensity);
+  
+  await session.update({
+    audio: {
+      output: {
+        voice: config.voice,
+        speed: config.speed
+      }
+    },
+    instructions: getInstructionsForIntensity(newIntensity)
+  });
+}
+State Persistence
+Maintain simulation state across turns:
+javascript// Store in session context or external state management
+const sessionContext = {
+  mode: "simulation",  // "normal" | "simulation" | "debrief"
+  simulationState: { ... }
+};
+Latency Considerations
+
+Voice config changes should be queued between turns, not mid-response
+Intensity calculation happens immediately after user input
+New voice config applied before generating next response
+
+
+Summary for Developer
+ComponentDescriptionEntry triggerUser says "START DBT PATIENT SIMULATION"Exit triggersManual phrase, intensity reaches 0 (success), or 3+ turns at level 9 (failure)State trackingIntensity level (0-9), turn history, classification of each exchangeVoice dynamicsVoice (sage→coral→verse) and speed (0.95→1.3) change based on intensityScoringPattern matching on user input to classify as validating/invalidatingIntensity calculation+/- adjustments based on communication patternsDebriefAutomatic analysis of what worked, what didn't, with specific alternativesPersonasDetailed patient backstory and level-specific behavioral instructions
+This creates a realistic, educational, and safe training environment for DBT practitioners to sharpen their skills in a consequence-free setting.
