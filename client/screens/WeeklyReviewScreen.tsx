@@ -114,7 +114,16 @@ export default function WeeklyReviewScreen() {
             const isToday = dateStr === today;
             
             return (
-              <View key={dateStr} style={styles.dayColumn}>
+              <Pressable
+                key={dateStr}
+                style={styles.dayColumn}
+                onPress={() => {
+                  if (isComplete) {
+                    navigation.getParent()?.getParent()?.navigate("DiaryEntryDetail", { date: dateStr });
+                  }
+                }}
+                disabled={!isComplete}
+              >
                 <ThemedText
                   style={[styles.dayLabel, isToday && styles.dayLabelToday]}
                   type="small"
@@ -136,7 +145,7 @@ export default function WeeklyReviewScreen() {
                     </ThemedText>
                   )}
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>

@@ -6,6 +6,7 @@ import WeeklyRecordingScreen from "@/screens/WeeklyRecordingScreen";
 import AICompletionScreen from "@/screens/AICompletionScreen";
 import FinalReviewScreen from "@/screens/FinalReviewScreen";
 import SkillsLibraryScreen from "@/screens/SkillsLibraryScreen";
+import DiaryEntryDetailScreen from "@/screens/DiaryEntryDetailScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type RootStackParamList = {
@@ -22,6 +23,7 @@ export type RootStackParamList = {
     diaryData: DiaryData;
   };
   SkillsLibrary: undefined;
+  DiaryEntryDetail: { date: string };
 };
 
 export type ExtractedData = {
@@ -92,6 +94,13 @@ export default function RootStackNavigator() {
         component={SkillsLibraryScreen}
         options={{
           headerTitle: "Skills Library",
+        }}
+      />
+      <Stack.Screen
+        name="DiaryEntryDetail"
+        component={DiaryEntryDetailScreen}
+        options={{
+          headerTitle: "Entry Details",
         }}
       />
     </Stack.Navigator>

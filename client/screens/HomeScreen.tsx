@@ -110,7 +110,16 @@ export default function HomeScreen() {
             const isToday = dateStr === today;
             
             return (
-              <View key={dateStr} style={styles.dayColumn}>
+              <Pressable
+                key={dateStr}
+                style={styles.dayColumn}
+                onPress={() => {
+                  if (isComplete) {
+                    navigation.navigate("DiaryEntryDetail", { date: dateStr });
+                  }
+                }}
+                disabled={!isComplete}
+              >
                 <ThemedText style={styles.dayLabel} type="small">
                   {dayLabels[index]}
                 </ThemedText>
@@ -125,7 +134,7 @@ export default function HomeScreen() {
                     <Feather name="check" size={14} color={theme.success} />
                   ) : null}
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>
