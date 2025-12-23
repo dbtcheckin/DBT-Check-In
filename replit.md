@@ -39,6 +39,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Model
 - **Users**: Basic user profile with display name, avatar preset, notification preferences
 - **Diary Entries**: Daily entries containing emotions (0-5 scale), urges (0-5 scale), skills used, behaviors, context (prompting events, vulnerabilities), and voice transcript
+- **User Field Configs**: Device-scoped custom emotions and behaviors (userFieldConfigs table with customEmotions and customBehaviors JSONB arrays)
 
 ### Key Design Decisions
 1. **Voice-first approach**: Uses OpenAI Realtime API via WebRTC for live voice-to-voice interaction on web, with real-time transcript display and live diary card updates showing detected emotions/skills
@@ -46,6 +47,7 @@ Preferred communication style: Simple, everyday language.
 3. **Dark theme only**: Follows therapeutic "Quiet Strength" design with warm clay/sand accent colors (#c4a67c)
 4. **Path aliases**: Uses `@/` for client code and `@shared/` for shared code via babel module-resolver
 5. **WebRTC for web only**: Voice recording uses WebRTC with navigator.mediaDevices API - works on web browsers but not in Expo Go mobile app
+6. **Device ID scoping**: Custom fields are isolated per device using X-Device-ID header. UUID generated on first launch and stored in AsyncStorage. Ready for migration to authenticated user IDs when auth is added.
 
 ## External Dependencies
 
