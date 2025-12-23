@@ -102,8 +102,8 @@ export default function RecordingScreen() {
   });
 
   const addEmotionMutation = useMutation({
-    mutationFn: async ({ label, trackingType }: { label: string; trackingType: TrackingType }) => {
-      return apiRequest("POST", "/api/field-configs/emotion", { label, trackingType });
+    mutationFn: async ({ label, trackingType, scaleMax }: { label: string; trackingType: TrackingType; scaleMax?: number }) => {
+      return apiRequest("POST", "/api/field-configs/emotion", { label, trackingType, scaleMax });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
@@ -114,8 +114,8 @@ export default function RecordingScreen() {
   });
 
   const addBehaviorMutation = useMutation({
-    mutationFn: async ({ label, trackingType }: { label: string; trackingType: TrackingType }) => {
-      return apiRequest("POST", "/api/field-configs/behavior", { label, trackingType });
+    mutationFn: async ({ label, trackingType, scaleMax }: { label: string; trackingType: TrackingType; scaleMax?: number }) => {
+      return apiRequest("POST", "/api/field-configs/behavior", { label, trackingType, scaleMax });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
@@ -125,12 +125,12 @@ export default function RecordingScreen() {
     },
   });
 
-  const handleAddCustomEmotion = (label: string, trackingType: TrackingType) => {
-    addEmotionMutation.mutate({ label, trackingType });
+  const handleAddCustomEmotion = (label: string, trackingType: TrackingType, scaleMax?: number) => {
+    addEmotionMutation.mutate({ label, trackingType, scaleMax });
   };
 
-  const handleAddCustomBehavior = (label: string, trackingType: TrackingType) => {
-    addBehaviorMutation.mutate({ label, trackingType });
+  const handleAddCustomBehavior = (label: string, trackingType: TrackingType, scaleMax?: number) => {
+    addBehaviorMutation.mutate({ label, trackingType, scaleMax });
   };
 
   const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();

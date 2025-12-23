@@ -8,9 +8,8 @@ import type { CustomFieldConfig, TrackingType } from "@shared/schema";
 
 const TRACKING_TYPE_OPTIONS: { value: TrackingType; label: string; shortLabel: string }[] = [
   { value: "boolean", label: "Yes / No", shortLabel: "Y/N" },
-  { value: "scale5", label: "0-5 Scale", shortLabel: "0-5" },
-  { value: "scale7", label: "0-7 Scale", shortLabel: "0-7" },
-  { value: "quantity", label: "What? + #", shortLabel: "Qty" },
+  { value: "scale", label: "Scale", shortLabel: "0-" },
+  { value: "quantity", label: "Quantity", shortLabel: "Qty" },
 ];
 
 export type DiaryCardData = {
@@ -163,8 +162,8 @@ type LiveDiaryCardProps = {
   uncertainFields?: Set<string>;
   customEmotions?: CustomFieldConfig[];
   customBehaviors?: CustomFieldConfig[];
-  onAddCustomEmotion?: (label: string, trackingType: TrackingType) => void;
-  onAddCustomBehavior?: (label: string, trackingType: TrackingType) => void;
+  onAddCustomEmotion?: (label: string, trackingType: TrackingType, scaleMax?: number) => void;
+  onAddCustomBehavior?: (label: string, trackingType: TrackingType, scaleMax?: number) => void;
 };
 
 export default function LiveDiaryCard({ 
@@ -179,8 +178,10 @@ export default function LiveDiaryCard({
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const [newEmotionLabel, setNewEmotionLabel] = useState("");
   const [newBehaviorLabel, setNewBehaviorLabel] = useState("");
-  const [emotionTrackingType, setEmotionTrackingType] = useState<TrackingType>("scale5");
+  const [emotionTrackingType, setEmotionTrackingType] = useState<TrackingType>("scale");
   const [behaviorTrackingType, setBehaviorTrackingType] = useState<TrackingType>("boolean");
+  const [emotionScaleMax, setEmotionScaleMax] = useState("5");
+  const [behaviorScaleMax, setBehaviorScaleMax] = useState("5");
 
   const hasOptionalEmotions = OPTIONAL_EMOTIONS.some(
     (field) => data.emotions[field.id]?.value != null
@@ -188,29 +189,38 @@ export default function LiveDiaryCard({
 
   const handleAddEmotion = () => {
     if (newEmotionLabel.trim() && onAddCustomEmotion) {
-      onAddCustomEmotion(newEmotionLabel.trim(), emotionTrackingType);
+      const scaleMax = emotionTrackingType === "scale" ? parseInt(emotionScaleMax) || 5 : undefined;
+      onAddCustomEmotion(newEmotionLabel.trim(), emotionTrackingType, scaleMax);
       setNewEmotionLabel("");
-      setEmotionTrackingType("scale5");
+      setEmotionTrackingType("scale");
+      setEmotionScaleMax("5");
     }
   };
 
   const handleAddBehavior = () => {
     if (newBehaviorLabel.trim() && onAddCustomBehavior) {
-      onAddCustomBehavior(newBehaviorLabel.trim(), behaviorTrackingType);
+      const scaleMax = behaviorTrackingType === "scale" ? parseInt(behaviorScaleMax) || 5 : undefined;
+      onAddCustomBehavior(newBehaviorLabel.trim(), behaviorTrackingType, scaleMax);
       setNewBehaviorLabel("");
       setBehaviorTrackingType("boolean");
+      setBehaviorScaleMax("5");
     }
   };
 
-  const getTrackingTypeLabel = (trackingType: TrackingType | undefined): string => {
-    const option = TRACKING_TYPE_OPTIONS.find(o => o.value === trackingType);
-    return option ? option.shortLabel : "0-5";
+  const getTrackingTypeLabel = (field: CustomFieldConfig): string => {
+    if (field.trackingType === "scale") {
+      return `0-${field.scaleMax || 5}`;
+    } else if (field.trackingType === "boolean") {
+      return "Y/N";
+    } else if (field.trackingType === "quantity") {
+      return "Qty";
+    }
+    return "0-5";
   };
 
-  const getFieldType = (trackingType: TrackingType | undefined): "boolean" | "scale" | "scale7" | "quantity" => {
+  const getFieldType = (trackingType: TrackingType | undefined): "boolean" | "scale" | "quantity" => {
     switch (trackingType) {
       case "boolean": return "boolean";
-      case "scale7": return "scale7";
       case "quantity": return "quantity";
       default: return "scale";
     }
@@ -366,7 +376,7 @@ export default function LiveDiaryCard({
                 value={data.emotions[field.id]?.value}
                 isGlowing={glowingFields.has(`emotions.${field.id}`)}
                 type={getFieldType(field.trackingType)}
-                scaleLabel={`(${getTrackingTypeLabel(field.trackingType)})`}
+                scaleLabel={`(${getTrackingTypeLabel(field)})`}
               />
             ))}
             {onAddCustomEmotion ? (
@@ -398,8 +408,24 @@ export default function LiveDiaryCard({
                         styles.trackingTypeText,
                         emotionTrackingType === option.value && styles.trackingTypeTextSelected
                       ]}>
-                        {option.shortLabel}
+                        {option.value === "scale" ? `0-` : option.shortLabel}
                       </ThemedText>
+                      {option.value === "scale" && emotionTrackingType === "scale" ? (
+                        <TextInput
+                          style={styles.scaleMaxInput}
+                          value={emotionScaleMax}
+                          onChangeText={(text) => {
+                            const num = text.replace(/[^0-9]/g, '');
+                            if (num === '' || (parseInt(num) >= 0 && parseInt(num) <= 100)) {
+                              setEmotionScaleMax(num);
+                            }
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={3}
+                          placeholder="5"
+                          placeholderTextColor={Colors.dark.textSecondary}
+                        />
+                      ) : null}
                     </Pressable>
                   ))}
                 </View>
@@ -415,7 +441,7 @@ export default function LiveDiaryCard({
                 value={data.behaviors?.[field.id] ? true : false}
                 type={getFieldType(field.trackingType)}
                 isGlowing={glowingFields.has(`behaviors.${field.id}`)}
-                scaleLabel={`(${getTrackingTypeLabel(field.trackingType)})`}
+                scaleLabel={`(${getTrackingTypeLabel(field)})`}
               />
             ))}
             {customBehaviors.length === 0 ? (
@@ -450,8 +476,24 @@ export default function LiveDiaryCard({
                         styles.trackingTypeText,
                         behaviorTrackingType === option.value && styles.trackingTypeTextSelected
                       ]}>
-                        {option.shortLabel}
+                        {option.value === "scale" ? `0-` : option.shortLabel}
                       </ThemedText>
+                      {option.value === "scale" && behaviorTrackingType === "scale" ? (
+                        <TextInput
+                          style={styles.scaleMaxInput}
+                          value={behaviorScaleMax}
+                          onChangeText={(text) => {
+                            const num = text.replace(/[^0-9]/g, '');
+                            if (num === '' || (parseInt(num) >= 0 && parseInt(num) <= 100)) {
+                              setBehaviorScaleMax(num);
+                            }
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={3}
+                          placeholder="5"
+                          placeholderTextColor={Colors.dark.textSecondary}
+                        />
+                      ) : null}
                     </Pressable>
                   ))}
                 </View>
@@ -679,10 +721,23 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   trackingTypeOption: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: BorderRadius.sm,
     backgroundColor: Colors.dark.backgroundTertiary,
+  },
+  scaleMaxInput: {
+    backgroundColor: Colors.dark.backgroundRoot,
+    borderRadius: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    fontSize: 9,
+    color: Colors.dark.text,
+    minWidth: 24,
+    textAlign: "center",
+    marginLeft: 0,
   },
   trackingTypeOptionSelected: {
     backgroundColor: Colors.dark.accent,

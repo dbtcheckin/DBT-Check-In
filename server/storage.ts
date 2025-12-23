@@ -99,14 +99,27 @@ export class DatabaseStorage implements IStorage {
     const [config] = await db.select().from(userFieldConfigs).where(eq(userFieldConfigs.userId, deviceId));
     if (!config) return undefined;
     
-    const backfilledEmotions = (config.customEmotions || []).map(e => ({
-      ...e,
-      trackingType: e.trackingType || "scale5"
-    }));
-    const backfilledBehaviors = (config.customBehaviors || []).map(b => ({
-      ...b,
-      trackingType: b.trackingType || "boolean"
-    }));
+    const migrateTrackingType = (field: any, defaultMax: number) => {
+      const tt = field.trackingType;
+      if (tt === "scale5") {
+        return { ...field, trackingType: "scale", scaleMax: 5 };
+      } else if (tt === "scale7") {
+        return { ...field, trackingType: "scale", scaleMax: 7 };
+      } else if (tt === "scale" && !field.scaleMax) {
+        return { ...field, scaleMax: defaultMax };
+      } else if (!tt) {
+        return { ...field, trackingType: "scale", scaleMax: defaultMax };
+      }
+      return field;
+    };
+    
+    const backfilledEmotions = (config.customEmotions || []).map(e => migrateTrackingType(e, 5));
+    const backfilledBehaviors = (config.customBehaviors || []).map(b => {
+      if (!b.trackingType) {
+        return { ...b, trackingType: "boolean" };
+      }
+      return migrateTrackingType(b, 5);
+    });
     
     return {
       ...config,
