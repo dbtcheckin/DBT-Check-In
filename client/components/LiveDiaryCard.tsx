@@ -735,9 +735,9 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     fontSize: 9,
     color: Colors.dark.text,
-    minWidth: 24,
+    width: 32,
     textAlign: "center",
-    marginLeft: 0,
+    marginLeft: 4,
   },
   trackingTypeOptionSelected: {
     backgroundColor: Colors.dark.accent,
