@@ -178,14 +178,18 @@ export default function LiveDiaryCard({
   );
 
   const handleAddEmotion = () => {
+    console.log("handleAddEmotion called, label:", newEmotionLabel, "onAddCustomEmotion exists:", !!onAddCustomEmotion);
     if (newEmotionLabel.trim() && onAddCustomEmotion) {
+      console.log("Calling onAddCustomEmotion with:", newEmotionLabel.trim());
       onAddCustomEmotion(newEmotionLabel.trim());
       setNewEmotionLabel("");
     }
   };
 
   const handleAddBehavior = () => {
+    console.log("handleAddBehavior called, label:", newBehaviorLabel, "onAddCustomBehavior exists:", !!onAddCustomBehavior);
     if (newBehaviorLabel.trim() && onAddCustomBehavior) {
+      console.log("Calling onAddCustomBehavior with:", newBehaviorLabel.trim());
       onAddCustomBehavior(newBehaviorLabel.trim());
       setNewBehaviorLabel("");
     }

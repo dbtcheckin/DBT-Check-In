@@ -103,19 +103,29 @@ export default function RecordingScreen() {
 
   const addEmotionMutation = useMutation({
     mutationFn: async (label: string) => {
+      console.log("Adding custom emotion:", label);
       return apiRequest("POST", "/api/field-configs/emotion", { label });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Custom emotion added successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
+    },
+    onError: (error) => {
+      console.error("Failed to add custom emotion:", error);
     },
   });
 
   const addBehaviorMutation = useMutation({
     mutationFn: async (label: string) => {
+      console.log("Adding custom behavior:", label);
       return apiRequest("POST", "/api/field-configs/behavior", { label });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Custom behavior added successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
+    },
+    onError: (error) => {
+      console.error("Failed to add custom behavior:", error);
     },
   });
 
