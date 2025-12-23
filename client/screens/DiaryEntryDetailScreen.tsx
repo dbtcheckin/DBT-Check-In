@@ -388,7 +388,7 @@ export default function DiaryEntryDetailScreen() {
 
           {displayMessages.length > 0 ? (
             <View style={styles.accordionWrapper}>
-              <Accordion title="Conversation" defaultExpanded={showTranscript}>
+              <Accordion title="Conversation" defaultExpanded={showTranscript} titleStyle={styles.accordionTitle}>
                 <View style={styles.conversationContent}>
                   <ScrollView style={styles.transcriptScroll} nestedScrollEnabled>
                     {displayMessages.map((message) => (
@@ -556,7 +556,7 @@ export default function DiaryEntryDetailScreen() {
               </View>
             ) : displayMessages.length > 0 ? (
               <View style={styles.accordionWrapper}>
-                <Accordion title="Conversation" defaultExpanded={showTranscript}>
+                <Accordion title="Conversation" defaultExpanded={showTranscript} titleStyle={styles.accordionTitle}>
                   <View style={styles.conversationContent}>
                     <ScrollView style={styles.transcriptScroll} nestedScrollEnabled>
                       {displayMessages.map((message) => (
@@ -677,6 +677,12 @@ const styles = StyleSheet.create({
   },
   accordionWrapper: {
     marginBottom: Spacing.lg,
+  },
+  accordionTitle: {
+    fontSize: 10,
+    color: Colors.dark.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   conversationContent: {
     maxHeight: 200,
