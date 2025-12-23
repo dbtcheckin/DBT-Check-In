@@ -240,7 +240,35 @@ export default function RecordingScreen() {
       return { urges, emotions };
     };
 
-    const groupedWithScore = text.match(/(?:urges?\s+(?:for\s+|today\s+(?:for\s+)?)?)?(.+?(?:,\s*.+?)*(?:,?\s+and\s+.+?)?)\s+(?:at|is|are|were|was)\s*(?:a\s*)?(zero|one|two|three|four|five|\d)/gi);
+    const linkingPhrases = /,?\s*(?:they\s+)?(?:are|is|were|was|at)\s+(?:all\s+)?(?:at\s+)?(?:a\s+)?(zero|one|two|three|four|five|\d)\b/gi;
+    const linkingMatches = [...text.matchAll(linkingPhrases)];
+    for (const linkMatch of linkingMatches) {
+      const value = wordToNumber(linkMatch[1]);
+      if (value !== null) {
+        const beforeMatch = text.substring(0, linkMatch.index!);
+        const listMatch = beforeMatch.match(/(?:^|[.!?]\s*)(?:(?:so\s+)?for\s+)?([a-z][a-z,\s\-]*(?:and|or)\s+[a-z\-]+)\s*$/i);
+        if (listMatch) {
+          const listPart = listMatch[1];
+          const { urges, emotions } = extractFieldsFromList(listPart);
+          
+          urges.forEach(urge => {
+            if (!newData.urges[urge] || newData.urges[urge].value === null) {
+              newData.urges[urge] = { value, detected: true };
+              newGlow.add(`urges.${urge}`);
+            }
+          });
+          
+          emotions.forEach(emo => {
+            if (!newData.emotions[emo] || newData.emotions[emo].value === null) {
+              newData.emotions[emo] = { value, detected: true };
+              newGlow.add(`emotions.${emo}`);
+            }
+          });
+        }
+      }
+    }
+
+    const groupedWithScore = text.match(/(?:urges?\s+(?:for\s+|today\s+(?:for\s+)?)?)?([a-z][a-z\s,\-]+(?:,?\s*(?:and|or)\s+[a-z\-]+)?)\s+at\s+(?:a\s*)?(zero|one|two|three|four|five|\d)/gi);
     if (groupedWithScore) {
       for (const match of groupedWithScore) {
         const valueMatch = match.match(/(zero|one|two|three|four|five|\d)\s*$/i);
@@ -248,7 +276,7 @@ export default function RecordingScreen() {
           const value = wordToNumber(valueMatch[1]);
           if (value !== null) {
             const listPart = match.replace(/(zero|one|two|three|four|five|\d)\s*$/i, "")
-              .replace(/\s*(at|is|are|were|was)\s*(?:a\s*)?$/i, "");
+              .replace(/\s*at\s*(?:a\s*)?$/i, "");
             const { urges, emotions } = extractFieldsFromList(listPart);
             
             urges.forEach(urge => {
