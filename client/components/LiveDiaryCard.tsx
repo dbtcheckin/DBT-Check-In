@@ -6,9 +6,21 @@ import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 export type DiaryCardData = {
   urges: Record<string, { value: number | null; detected?: boolean }>;
   emotions: Record<string, { value: number | null; detected?: boolean }>;
-  actions: Record<string, { value: boolean | null; detected?: boolean }>;
+  actions: Record<string, { value: number | boolean | null; detected?: boolean }>;
   substances: Record<string, { value: string | null; detected?: boolean }>;
   skills: Record<string, { used: boolean; detected?: boolean }>;
+  weeklySession?: {
+    sessionUrges: Record<string, { value: number | null; detected?: boolean }>;
+    beliefToRegulate: Record<string, { value: number | null; detected?: boolean }>;
+    medChanges?: string;
+    homework?: string;
+    skillsFocus?: string;
+  };
+  metadata?: {
+    filledOutInSession?: boolean;
+    howOftenFilledOut?: string;
+    lastDayFilledOut?: string;
+  };
 };
 
 const URGES = [
@@ -17,25 +29,43 @@ const URGES = [
   { id: "drugs", label: "Drugs" },
 ];
 
-const EMOTIONS = [
+const CORE_EMOTIONS = [
+  { id: "emotion_misery", label: "Emotion Misery", color: Colors.dark.emotions.emotion_misery },
+  { id: "physical_misery", label: "Physical Misery", color: Colors.dark.emotions.physical_misery },
+  { id: "joy", label: "Joy", color: Colors.dark.emotions.joy },
+];
+
+const OPTIONAL_EMOTIONS = [
   { id: "anxiety", label: "Anxiety", color: Colors.dark.emotions.anxiety },
   { id: "sadness", label: "Sadness", color: Colors.dark.emotions.sadness },
   { id: "anger", label: "Anger", color: Colors.dark.emotions.anger },
   { id: "shame", label: "Shame", color: Colors.dark.emotions.shame },
-  { id: "joy", label: "Joy", color: Colors.dark.emotions.joy },
-  { id: "misery", label: "Misery", color: Colors.dark.emotions.misery },
+  { id: "fear", label: "Fear", color: Colors.dark.emotions.fear },
 ];
 
 const ACTIONS = [
-  { id: "self_harm_action", label: "Self-Harm" },
-  { id: "lied", label: "Lied" },
-  { id: "used_skills", label: "Skills Used" },
+  { id: "self_harm_action", label: "Self-Harm", type: "boolean" as const },
+  { id: "lied", label: "Lied", type: "count" as const },
+  { id: "used_skills", label: "Skills Used", type: "scale7" as const },
 ];
 
 const SUBSTANCES = [
-  { id: "alcohol", label: "Alcohol" },
-  { id: "illegal_drugs", label: "Drugs" },
-  { id: "meds_prescribed", label: "Meds Rx'd" },
+  { id: "alcohol", label: "Alcohol", description: "# + type" },
+  { id: "illegal_drugs", label: "Drugs", description: "# + type" },
+  { id: "meds_prescribed", label: "Meds Rx'd", description: "Y/N" },
+  { id: "prn_otc_meds", label: "PRN/OTC", description: "# + type" },
+];
+
+const SESSION_URGES = [
+  { id: "quit_therapy", label: "Quit Therapy" },
+  { id: "use_drugs", label: "Use Drugs" },
+  { id: "commit_suicide", label: "Commit Suicide" },
+];
+
+const BELIEF_TO_REGULATE = [
+  { id: "emotions", label: "Emotions" },
+  { id: "actions", label: "Actions" },
+  { id: "thoughts", label: "Thoughts" },
 ];
 
 const SKILLS = {
@@ -50,31 +80,41 @@ type FieldCellProps = {
   value: number | string | boolean | null | undefined;
   isGlowing?: boolean;
   isUncertain?: boolean;
-  type?: "scale" | "boolean" | "text";
+  type?: "scale" | "scale7" | "boolean" | "count" | "text" | "quantity";
   color?: string;
+  scaleLabel?: string;
 };
 
-function FieldCell({ label, value, isGlowing, isUncertain, type = "scale", color }: FieldCellProps) {
+function FieldCell({ label, value, isGlowing, isUncertain, type = "scale", color, scaleLabel }: FieldCellProps) {
   const hasVal = value !== undefined && value !== null;
   let display: string;
   
   if (type === "boolean") {
     display = value === true ? "Y" : value === false ? "N" : "-";
+  } else if (type === "count") {
+    display = hasVal ? `#${value}` : "-";
+  } else if (type === "scale7") {
+    display = hasVal ? String(value) : "-";
+  } else if (type === "quantity") {
+    display = hasVal ? String(value) : "-";
   } else {
     display = hasVal ? String(value) : "-";
   }
 
   return (
     <View style={[styles.fieldCell, isGlowing && styles.fieldCellGlowing]}>
-      <ThemedText
-        style={[
-          styles.fieldLabel,
-          hasVal && styles.fieldLabelActive,
-          color ? { color } : null,
-        ]}
-      >
-        {label}
-      </ThemedText>
+      <View style={styles.fieldLabelContainer}>
+        <ThemedText
+          style={[
+            styles.fieldLabel,
+            hasVal && styles.fieldLabelActive,
+            color ? { color } : null,
+          ]}
+        >
+          {label}
+        </ThemedText>
+        {scaleLabel ? <ThemedText style={styles.scaleLabel}>{scaleLabel}</ThemedText> : null}
+      </View>
       <ThemedText
         style={[
           styles.fieldValue,
@@ -115,6 +155,18 @@ type LiveDiaryCardProps = {
 export default function LiveDiaryCard({ data, glowingFields = new Set(), uncertainFields = new Set() }: LiveDiaryCardProps) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
 
+  const hasOptionalEmotions = OPTIONAL_EMOTIONS.some(
+    (field) => data.emotions[field.id]?.value != null
+  );
+
+  const hasWeeklyData = data.weeklySession && (
+    Object.values(data.weeklySession.sessionUrges || {}).some(v => v?.value != null) ||
+    Object.values(data.weeklySession.beliefToRegulate || {}).some(v => v?.value != null) ||
+    data.weeklySession.medChanges ||
+    data.weeklySession.homework ||
+    data.weeklySession.skillsFocus
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -137,8 +189,8 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
           ))}
         </View>
         <View style={styles.column}>
-          <ThemedText style={styles.sectionTitle}>Emotions (0-5)</ThemedText>
-          {EMOTIONS.map((field) => (
+          <ThemedText style={styles.sectionTitle}>Highest Ratings (0-5)</ThemedText>
+          {CORE_EMOTIONS.map((field) => (
             <FieldCell
               key={field.id}
               label={field.label}
@@ -151,6 +203,27 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
         </View>
       </View>
 
+      {hasOptionalEmotions ? (
+        <>
+          <View style={styles.divider} />
+          <View style={styles.row}>
+            <View style={styles.column}>
+              <ThemedText style={styles.sectionTitle}>Additional Emotions (0-5)</ThemedText>
+              {OPTIONAL_EMOTIONS.map((field) => (
+                <FieldCell
+                  key={field.id}
+                  label={field.label}
+                  value={data.emotions[field.id]?.value}
+                  isGlowing={glowingFields.has(`emotions.${field.id}`)}
+                  isUncertain={uncertainFields.has(`emotions.${field.id}`)}
+                  color={data.emotions[field.id]?.value != null ? field.color : undefined}
+                />
+              ))}
+            </View>
+          </View>
+        </>
+      ) : null}
+
       <View style={styles.divider} />
 
       <View style={styles.row}>
@@ -162,7 +235,8 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
               label={field.label}
               value={data.actions[field.id]?.value}
               isGlowing={glowingFields.has(`actions.${field.id}`)}
-              type="boolean"
+              type={field.type}
+              scaleLabel={field.type === "scale7" ? "(0-7)" : field.type === "count" ? "(#)" : undefined}
             />
           ))}
         </View>
@@ -173,14 +247,14 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
               key={field.id}
               label={field.label}
               value={
-                data.substances[field.id]?.value === "none"
-                  ? false
+                field.id === "meds_prescribed"
+                  ? (data.substances[field.id]?.value === "yes" ? true : 
+                     data.substances[field.id]?.value === "no" ? false :
+                     data.substances[field.id]?.value === "none" ? false : null)
                   : data.substances[field.id]?.value
-                    ? true
-                    : null
               }
               isGlowing={glowingFields.has(`substances.${field.id}`)}
-              type="boolean"
+              type={field.id === "meds_prescribed" ? "boolean" : "quantity"}
             />
           ))}
         </View>
@@ -189,7 +263,7 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
       <View style={styles.divider} />
 
       <View style={styles.skillsSection}>
-        <ThemedText style={styles.sectionTitle}>Skills Used</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Skills Checklist</ThemedText>
         {Object.entries(SKILLS).map(([module, skillIds]) => (
           <View key={module} style={styles.skillModule}>
             <ThemedText style={styles.skillModuleLabel}>
@@ -207,6 +281,57 @@ export default function LiveDiaryCard({ data, glowingFields = new Set(), uncerta
           </View>
         ))}
       </View>
+
+      {hasWeeklyData ? (
+        <>
+          <View style={styles.divider} />
+          <View style={styles.weeklySection}>
+            <ThemedText style={styles.sectionTitle}>Weekly / Pre-Session</ThemedText>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <ThemedText style={styles.subsectionTitle}>Session Urges (0-5)</ThemedText>
+                {SESSION_URGES.map((field) => (
+                  <FieldCell
+                    key={field.id}
+                    label={field.label}
+                    value={data.weeklySession?.sessionUrges?.[field.id]?.value}
+                    isGlowing={glowingFields.has(`session.${field.id}`)}
+                  />
+                ))}
+              </View>
+              <View style={styles.column}>
+                <ThemedText style={styles.subsectionTitle}>Belief I Can Change (0-5)</ThemedText>
+                {BELIEF_TO_REGULATE.map((field) => (
+                  <FieldCell
+                    key={field.id}
+                    label={field.label}
+                    value={data.weeklySession?.beliefToRegulate?.[field.id]?.value}
+                    isGlowing={glowingFields.has(`belief.${field.id}`)}
+                  />
+                ))}
+              </View>
+            </View>
+            {data.weeklySession?.medChanges ? (
+              <View style={styles.textFieldRow}>
+                <ThemedText style={styles.textFieldLabel}>Med Changes:</ThemedText>
+                <ThemedText style={styles.textFieldValue}>{data.weeklySession.medChanges}</ThemedText>
+              </View>
+            ) : null}
+            {data.weeklySession?.homework ? (
+              <View style={styles.textFieldRow}>
+                <ThemedText style={styles.textFieldLabel}>Homework:</ThemedText>
+                <ThemedText style={styles.textFieldValue}>{data.weeklySession.homework}</ThemedText>
+              </View>
+            ) : null}
+            {data.weeklySession?.skillsFocus ? (
+              <View style={styles.textFieldRow}>
+                <ThemedText style={styles.textFieldLabel}>Skills Focus:</ThemedText>
+                <ThemedText style={styles.textFieldValue}>{data.weeklySession.skillsFocus}</ThemedText>
+              </View>
+            ) : null}
+          </View>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -252,6 +377,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     marginHorizontal: -8,
     borderRadius: 4,
+  },
+  fieldLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    flex: 1,
   },
   fieldCellGlowing: {
     backgroundColor: Colors.dark.accentGlow,
@@ -310,5 +441,35 @@ const styles = StyleSheet.create({
   skillDotGlowing: {
     borderWidth: 2,
     borderColor: Colors.dark.accent,
+  },
+  scaleLabel: {
+    fontSize: 9,
+    color: Colors.dark.textTertiary,
+  },
+  weeklySection: {
+    marginTop: 4,
+  },
+  subsectionTitle: {
+    fontSize: 8,
+    color: Colors.dark.textGhost,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  textFieldRow: {
+    flexDirection: "row",
+    paddingVertical: 6,
+    gap: 8,
+  },
+  textFieldLabel: {
+    fontSize: 10,
+    color: Colors.dark.textTertiary,
+    textTransform: "uppercase",
+  },
+  textFieldValue: {
+    fontSize: 11,
+    color: Colors.dark.textSecondary,
+    flex: 1,
   },
 });

@@ -29,12 +29,13 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const DETECTION_PATTERNS = {
   emotions: {
+    emotion_misery: /\b(emotion.?misery|emotional.?misery|emotionally.?miserable|misery|miserable|awful|terrible|suffering)\b/i,
+    physical_misery: /\b(physical.?misery|physically.?miserable|physical.?pain|body.?pain|headache|tired|exhausted|sore|aching|sick|nauseous)\b/i,
+    joy: /\b(happy|joy|joyful|good|great|excited|pleased|content)\b/i,
     anger: /\b(angry|furious|rage|mad|pissed|irritated|annoyed|anger)\b/i,
     anxiety: /\b(anxious|worried|nervous|panic|stressed|tense|scared|anxiety)\b/i,
     sadness: /\b(sad|depressed|down|hopeless|low|blue|crying|sadness)\b/i,
-    joy: /\b(happy|joy|good|great|excited|pleased|content)\b/i,
     shame: /\b(shame|ashamed|embarrassed|guilty|humiliated)\b/i,
-    misery: /\b(misery|miserable|awful|terrible|suffering)\b/i,
     fear: /\b(fear|afraid|frightened|terrified|fearful)\b/i,
   },
   urges: {
@@ -153,19 +154,22 @@ export default function RecordingScreen() {
     const newGlow = new Set<string>();
     const newUncertain = new Set<string>();
 
-    const explicitMatches = text.matchAll(/\b(anxiety|anger|sadness|fear|shame|joy|misery|self-?harm|suicide|drugs|substances?|alcohol)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(zero|one|two|three|four|five|\d)(?:\s*(?:out of\s*5|\/\s*5))?/gi);
+    const explicitMatches = text.matchAll(/\b(emotion.?misery|physical.?misery|anxiety|anger|sadness|fear|shame|joy|misery|self-?harm|suicide|drugs|substances?|alcohol)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(zero|one|two|three|four|five|\d)(?:\s*(?:out of\s*5|\/\s*5))?/gi);
     for (const match of explicitMatches) {
-      const field = match[1].toLowerCase().replace(/-/g, "_");
+      const field = match[1].toLowerCase().replace(/-/g, "_").replace(/\s+/g, "_");
       const value = wordToNumber(match[2]);
       
       const emotionMap: Record<string, string> = {
+        emotion_misery: "emotion_misery",
+        emotional_misery: "emotion_misery",
+        physical_misery: "physical_misery",
+        joy: "joy",
         anxiety: "anxiety",
         anger: "anger",
         sadness: "sadness",
         fear: "fear",
         shame: "shame",
-        joy: "joy",
-        misery: "misery",
+        misery: "emotion_misery",
       };
       
       const urgeMap: Record<string, string> = {
@@ -209,13 +213,16 @@ export default function RecordingScreen() {
     };
 
     const emotionFieldMap: Record<string, string> = {
+      emotion_misery: "emotion_misery",
+      emotional_misery: "emotion_misery",
+      physical_misery: "physical_misery",
+      joy: "joy",
       anxiety: "anxiety",
       anger: "anger",
       sadness: "sadness",
       fear: "fear",
       shame: "shame",
-      joy: "joy",
-      misery: "misery",
+      misery: "emotion_misery",
     };
 
     const extractFieldsFromList = (listText: string): { urges: string[]; emotions: string[] } => {
@@ -352,9 +359,93 @@ export default function RecordingScreen() {
       }
     });
 
+    const liedCountPattern = /\blied\s*(?:about\s*)?(once|twice|one|two|three|four|five|\d+)\s*(?:times?)?/gi;
+    const liedMatches = [...text.matchAll(liedCountPattern)];
+    if (liedMatches.length > 0) {
+      const lastMatch = liedMatches[liedMatches.length - 1];
+      const countWord = lastMatch[1].toLowerCase();
+      const countMap: Record<string, number> = { once: 1, twice: 2, one: 1, two: 2, three: 3, four: 4, five: 5 };
+      const count = (countMap[countWord] ?? parseInt(countWord, 10)) || 1;
+      if (!newData.actions.lied || newData.actions.lied.value === null) {
+        newData.actions.lied = { value: count, detected: true };
+        newGlow.add("actions.lied");
+      }
+    }
+    
+    if (/didn't lie|no lies|honest today|was honest/.test(text) && !newData.actions.lied) {
+      newData.actions.lied = { value: 0, detected: true };
+      newGlow.add("actions.lied");
+    }
+
+    const usedSkillsPattern = /\b(?:skills?\s+(?:used|usage|rating)|used\s+skills?)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(zero|one|two|three|four|five|six|seven|\d)(?:\s*(?:out of\s*7|\/\s*7))?/gi;
+    const skillsRatingMatches = [...text.matchAll(usedSkillsPattern)];
+    if (skillsRatingMatches.length > 0) {
+      const lastMatch = skillsRatingMatches[skillsRatingMatches.length - 1];
+      const ratingWord = lastMatch[1].toLowerCase();
+      const ratingMap: Record<string, number> = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
+      const rating = ratingMap[ratingWord] ?? parseInt(ratingWord, 10);
+      if (rating >= 0 && rating <= 7) {
+        if (!newData.actions.used_skills || newData.actions.used_skills.value === null) {
+          newData.actions.used_skills = { value: rating, detected: true };
+          newGlow.add("actions.used_skills");
+        }
+      }
+    }
+
+    const alcoholPattern = /\b(?:had|drank|consumed)\s*(one|two|three|four|five|\d+)\s*(beers?|glasses?|drinks?|shots?|wines?|cocktails?)/gi;
+    const alcoholMatches = [...text.matchAll(alcoholPattern)];
+    if (alcoholMatches.length > 0) {
+      const lastMatch = alcoholMatches[alcoholMatches.length - 1];
+      const countWord = lastMatch[1].toLowerCase();
+      const countMap: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+      const count = (countMap[countWord] ?? parseInt(countWord, 10)) || 1;
+      const drinkType = lastMatch[2].toLowerCase();
+      newData.substances.alcohol = { value: `${count} ${drinkType}`, detected: true };
+      newGlow.add("substances.alcohol");
+    }
+
     if (/didn't (drink|have any)|no (alcohol|drinks)|sober/.test(text) && !newData.substances.alcohol) {
       newData.substances.alcohol = { value: "none", detected: true };
       newGlow.add("substances.alcohol");
+    }
+
+    const drugsPattern = /\b(?:used|smoked|took|had)\s*(one|two|three|four|five|\d+)?\s*(joints?|hits?|lines?|pills?|tabs?|doses?|grams?)\s*(?:of\s*)?(weed|marijuana|cocaine|heroin|meth|mdma|molly|ecstasy)?/gi;
+    const drugsMatches = [...text.matchAll(drugsPattern)];
+    if (drugsMatches.length > 0) {
+      const lastMatch = drugsMatches[drugsMatches.length - 1];
+      const countWord = lastMatch[1]?.toLowerCase() || "1";
+      const countMap: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+      const count = (countMap[countWord] ?? parseInt(countWord, 10)) || 1;
+      const unit = lastMatch[2]?.toLowerCase() || "";
+      const drugType = lastMatch[3]?.toLowerCase() || "";
+      newData.substances.illegal_drugs = { value: `${count} ${unit}${drugType ? ` ${drugType}` : ""}`.trim(), detected: true };
+      newGlow.add("substances.illegal_drugs");
+    }
+    
+    if (/didn't (use|do) (any )?(drugs|substances)|no (drugs|substances)|clean today|stayed clean/.test(text) && !newData.substances.illegal_drugs) {
+      newData.substances.illegal_drugs = { value: "none", detected: true };
+      newGlow.add("substances.illegal_drugs");
+    }
+
+    const prnOtcPattern = /\b(?:took|used|had)\s*(one|two|three|four|five|\d+)?\s*(ibuprofen|tylenol|advil|aspirin|benadryl|melatonin|otc|over.?the.?counter)\b/gi;
+    const prnMatches = [...text.matchAll(prnOtcPattern)];
+    if (prnMatches.length > 0) {
+      const lastMatch = prnMatches[prnMatches.length - 1];
+      const countWord = lastMatch[1]?.toLowerCase() || "1";
+      const countMap: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+      const count = (countMap[countWord] ?? parseInt(countWord, 10)) || 1;
+      const medType = lastMatch[2].toLowerCase();
+      newData.substances.prn_otc_meds = { value: `${count} ${medType}`, detected: true };
+      newGlow.add("substances.prn_otc_meds");
+    }
+
+    if (/took (my )?meds|medications? as prescribed|took prescribed/.test(text) && !newData.substances.meds_prescribed) {
+      newData.substances.meds_prescribed = { value: "yes", detected: true };
+      newGlow.add("substances.meds_prescribed");
+    }
+    if (/didn't take (my )?meds|skipped (my )?medication|missed (my )?meds/.test(text) && !newData.substances.meds_prescribed) {
+      newData.substances.meds_prescribed = { value: "no", detected: true };
+      newGlow.add("substances.meds_prescribed");
     }
 
     cardDataRef.current = newData;

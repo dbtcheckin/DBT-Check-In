@@ -15,6 +15,33 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export type DiaryEntryActions = {
+  self_harm_action?: boolean;
+  lied?: number;
+  used_skills?: number;
+};
+
+export type DiaryEntrySubstances = {
+  alcohol?: string | null;
+  illegal_drugs?: string | null;
+  meds_prescribed?: boolean;
+  prn_otc_meds?: string | null;
+};
+
+export type WeeklySessionData = {
+  sessionUrges?: Record<string, number>;
+  beliefToRegulate?: Record<string, number>;
+  medChanges?: string;
+  homework?: string;
+  skillsFocus?: string;
+};
+
+export type DiaryEntryMetadata = {
+  filledOutInSession?: boolean;
+  howOftenFilledOut?: string;
+  lastDayFilledOut?: string;
+};
+
 export const diaryEntries = pgTable("diary_entries", {
   id: varchar("id")
     .primaryKey()
@@ -25,6 +52,10 @@ export const diaryEntries = pgTable("diary_entries", {
   urges: jsonb("urges").$type<Record<string, number>>().default({}),
   skills: jsonb("skills").$type<string[]>().default([]),
   behaviors: jsonb("behaviors").$type<Record<string, boolean>>().default({}),
+  actions: jsonb("actions").$type<DiaryEntryActions>().default({}),
+  substances: jsonb("substances").$type<DiaryEntrySubstances>().default({}),
+  weeklySession: jsonb("weekly_session").$type<WeeklySessionData>().default({}),
+  metadata: jsonb("metadata").$type<DiaryEntryMetadata>().default({}),
   context: jsonb("context").$type<{ promptingEvents: string[]; vulnerabilities: string[] }>().default({ promptingEvents: [], vulnerabilities: [] }),
   actedOnUrges: boolean("acted_on_urges").default(false),
   complete: boolean("complete").default(false),

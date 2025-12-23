@@ -33,6 +33,8 @@ export const Colors = {
       shame: "#c97b6b",
       joy: "#7d9b84",
       misery: "#8b7355",
+      emotion_misery: "#8b7355",
+      physical_misery: "#a67c7c",
     },
   },
   dark: {
@@ -67,6 +69,8 @@ export const Colors = {
       shame: "#c97b6b",
       joy: "#7d9b84",
       misery: "#8b7355",
+      emotion_misery: "#8b7355",
+      physical_misery: "#a67c7c",
     },
   },
 };
