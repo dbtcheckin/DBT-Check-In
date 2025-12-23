@@ -104,7 +104,7 @@ export function Accordion({
         <Animated.View
           style={[
             styles.content,
-            { backgroundColor: theme.backgroundDefault, borderTopColor: theme.border },
+            { backgroundColor: theme.backgroundDefault },
             contentAnimatedStyle,
           ]}
         >
@@ -143,8 +143,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderBottomLeftRadius: BorderRadius.xl,
     borderBottomRightRadius: BorderRadius.xl,
-    marginTop: Spacing.xs,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
+    marginTop: -Spacing.sm,
+    paddingTop: Spacing.lg,
   },
 });
