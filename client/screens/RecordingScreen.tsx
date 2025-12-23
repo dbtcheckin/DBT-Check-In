@@ -21,11 +21,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";
 import LiveDiaryCard, { DiaryCardData } from "@/components/LiveDiaryCard";
+import { SimulationIndicator } from "@/components/SimulationIndicator";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
-import { useWebRTC, ConversationMessage } from "@/hooks/useWebRTC";
+import { useSimulatedWebRTC } from "@/hooks/useSimulatedWebRTC";
+import type { ConversationMessage } from "@/hooks/useWebRTC";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { UserFieldConfig, TrackingType } from "@shared/schema";
+import type { SimulationState } from "@/lib/simulation";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -90,6 +93,7 @@ export default function RecordingScreen() {
   const [glowingFields, setGlowingFields] = useState<Set<string>>(new Set());
   const [uncertainFields, setUncertainFields] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [simulationState, setSimulationState] = useState<SimulationState | null>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -164,7 +168,11 @@ export default function RecordingScreen() {
     deleteBehaviorMutation.mutate(fieldId);
   };
 
-  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, simulationState: simState } = useSimulatedWebRTC();
+  
+  const handleSimulationStateChange = useCallback((state: SimulationState) => {
+    setSimulationState(state);
+  }, []);
 
   const pulseOpacity = useSharedValue(1);
 
@@ -588,7 +596,7 @@ export default function RecordingScreen() {
       setUncertainFields(new Set());
       setRecordingTime(0);
 
-      const success = await connectRealtime(handleTranscript, handleConnectionState, handleMessages);
+      const success = await connectRealtime(handleTranscript, handleConnectionState, handleMessages, handleSimulationStateChange);
       
       if (!success) {
         console.error("Failed to connect to realtime API");
@@ -714,6 +722,9 @@ export default function RecordingScreen() {
           <ThemedText style={styles.timerText} fontFamily="mono">
             {formatTime(recordingTime)}
           </ThemedText>
+          {simulationState?.active ? (
+            <SimulationIndicator state={simulationState} compact />
+          ) : null}
         </View>
       </View>
 
@@ -734,6 +745,10 @@ export default function RecordingScreen() {
             ]}
             showsVerticalScrollIndicator={true}
           >
+            {simulationState?.active || simulationState?.mode === "debrief" ? (
+              <SimulationIndicator state={simulationState} />
+            ) : null}
+            
             <View style={styles.cardContainer}>
               <LiveDiaryCard
                 data={cardData}
