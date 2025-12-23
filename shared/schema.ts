@@ -27,7 +27,7 @@ export const userFieldConfigs = pgTable("user_field_configs", {
   id: varchar("id")
     .primaryKey()
     .default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id),
+  userId: varchar("user_id"),
   customEmotions: jsonb("custom_emotions").$type<CustomFieldConfig[]>().default([]),
   customBehaviors: jsonb("custom_behaviors").$type<CustomFieldConfig[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
