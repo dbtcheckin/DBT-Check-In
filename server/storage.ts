@@ -97,7 +97,22 @@ export class DatabaseStorage implements IStorage {
 
   async getUserFieldConfigs(deviceId: string): Promise<UserFieldConfig | undefined> {
     const [config] = await db.select().from(userFieldConfigs).where(eq(userFieldConfigs.userId, deviceId));
-    return config || undefined;
+    if (!config) return undefined;
+    
+    const backfilledEmotions = (config.customEmotions || []).map(e => ({
+      ...e,
+      trackingType: e.trackingType || "scale5"
+    }));
+    const backfilledBehaviors = (config.customBehaviors || []).map(b => ({
+      ...b,
+      trackingType: b.trackingType || "boolean"
+    }));
+    
+    return {
+      ...config,
+      customEmotions: backfilledEmotions,
+      customBehaviors: backfilledBehaviors
+    } as UserFieldConfig;
   }
 
   async createUserFieldConfigs(deviceId: string): Promise<UserFieldConfig> {

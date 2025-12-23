@@ -25,7 +25,7 @@ import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { useWebRTC, ConversationMessage } from "@/hooks/useWebRTC";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import type { UserFieldConfig } from "@shared/schema";
+import type { UserFieldConfig, TrackingType } from "@shared/schema";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -102,12 +102,10 @@ export default function RecordingScreen() {
   });
 
   const addEmotionMutation = useMutation({
-    mutationFn: async (label: string) => {
-      console.log("Adding custom emotion:", label);
-      return apiRequest("POST", "/api/field-configs/emotion", { label });
+    mutationFn: async ({ label, trackingType }: { label: string; trackingType: TrackingType }) => {
+      return apiRequest("POST", "/api/field-configs/emotion", { label, trackingType });
     },
-    onSuccess: (data) => {
-      console.log("Custom emotion added successfully:", data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
     },
     onError: (error) => {
@@ -116,12 +114,10 @@ export default function RecordingScreen() {
   });
 
   const addBehaviorMutation = useMutation({
-    mutationFn: async (label: string) => {
-      console.log("Adding custom behavior:", label);
-      return apiRequest("POST", "/api/field-configs/behavior", { label });
+    mutationFn: async ({ label, trackingType }: { label: string; trackingType: TrackingType }) => {
+      return apiRequest("POST", "/api/field-configs/behavior", { label, trackingType });
     },
-    onSuccess: (data) => {
-      console.log("Custom behavior added successfully:", data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/field-configs"] });
     },
     onError: (error) => {
@@ -129,12 +125,12 @@ export default function RecordingScreen() {
     },
   });
 
-  const handleAddCustomEmotion = (label: string) => {
-    addEmotionMutation.mutate(label);
+  const handleAddCustomEmotion = (label: string, trackingType: TrackingType) => {
+    addEmotionMutation.mutate({ label, trackingType });
   };
 
-  const handleAddCustomBehavior = (label: string) => {
-    addBehaviorMutation.mutate(label);
+  const handleAddCustomBehavior = (label: string, trackingType: TrackingType) => {
+    addBehaviorMutation.mutate({ label, trackingType });
   };
 
   const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();

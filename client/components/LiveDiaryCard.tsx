@@ -4,7 +4,14 @@ import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { Accordion } from "@/components/Accordion";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
-import type { CustomFieldConfig } from "@shared/schema";
+import type { CustomFieldConfig, TrackingType } from "@shared/schema";
+
+const TRACKING_TYPE_OPTIONS: { value: TrackingType; label: string; shortLabel: string }[] = [
+  { value: "boolean", label: "Yes / No", shortLabel: "Y/N" },
+  { value: "scale5", label: "0-5 Scale", shortLabel: "0-5" },
+  { value: "scale7", label: "0-7 Scale", shortLabel: "0-7" },
+  { value: "quantity", label: "What? + #", shortLabel: "Qty" },
+];
 
 export type DiaryCardData = {
   urges: Record<string, { value: number | null; detected?: boolean }>;
@@ -156,8 +163,8 @@ type LiveDiaryCardProps = {
   uncertainFields?: Set<string>;
   customEmotions?: CustomFieldConfig[];
   customBehaviors?: CustomFieldConfig[];
-  onAddCustomEmotion?: (label: string) => void;
-  onAddCustomBehavior?: (label: string) => void;
+  onAddCustomEmotion?: (label: string, trackingType: TrackingType) => void;
+  onAddCustomBehavior?: (label: string, trackingType: TrackingType) => void;
 };
 
 export default function LiveDiaryCard({ 
@@ -172,26 +179,40 @@ export default function LiveDiaryCard({
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const [newEmotionLabel, setNewEmotionLabel] = useState("");
   const [newBehaviorLabel, setNewBehaviorLabel] = useState("");
+  const [emotionTrackingType, setEmotionTrackingType] = useState<TrackingType>("scale5");
+  const [behaviorTrackingType, setBehaviorTrackingType] = useState<TrackingType>("boolean");
 
   const hasOptionalEmotions = OPTIONAL_EMOTIONS.some(
     (field) => data.emotions[field.id]?.value != null
   );
 
   const handleAddEmotion = () => {
-    console.log("handleAddEmotion called, label:", newEmotionLabel, "onAddCustomEmotion exists:", !!onAddCustomEmotion);
     if (newEmotionLabel.trim() && onAddCustomEmotion) {
-      console.log("Calling onAddCustomEmotion with:", newEmotionLabel.trim());
-      onAddCustomEmotion(newEmotionLabel.trim());
+      onAddCustomEmotion(newEmotionLabel.trim(), emotionTrackingType);
       setNewEmotionLabel("");
+      setEmotionTrackingType("scale5");
     }
   };
 
   const handleAddBehavior = () => {
-    console.log("handleAddBehavior called, label:", newBehaviorLabel, "onAddCustomBehavior exists:", !!onAddCustomBehavior);
     if (newBehaviorLabel.trim() && onAddCustomBehavior) {
-      console.log("Calling onAddCustomBehavior with:", newBehaviorLabel.trim());
-      onAddCustomBehavior(newBehaviorLabel.trim());
+      onAddCustomBehavior(newBehaviorLabel.trim(), behaviorTrackingType);
       setNewBehaviorLabel("");
+      setBehaviorTrackingType("boolean");
+    }
+  };
+
+  const getTrackingTypeLabel = (trackingType: TrackingType | undefined): string => {
+    const option = TRACKING_TYPE_OPTIONS.find(o => o.value === trackingType);
+    return option ? option.shortLabel : "0-5";
+  };
+
+  const getFieldType = (trackingType: TrackingType | undefined): "boolean" | "scale" | "scale7" | "quantity" => {
+    switch (trackingType) {
+      case "boolean": return "boolean";
+      case "scale7": return "scale7";
+      case "quantity": return "quantity";
+      default: return "scale";
     }
   };
 
@@ -344,21 +365,44 @@ export default function LiveDiaryCard({
                 label={field.label}
                 value={data.emotions[field.id]?.value}
                 isGlowing={glowingFields.has(`emotions.${field.id}`)}
+                type={getFieldType(field.trackingType)}
+                scaleLabel={`(${getTrackingTypeLabel(field.trackingType)})`}
               />
             ))}
             {onAddCustomEmotion ? (
-              <View style={styles.addFieldRow}>
-                <TextInput
-                  style={styles.addFieldInput}
-                  value={newEmotionLabel}
-                  onChangeText={setNewEmotionLabel}
-                  placeholder="Add custom emotion..."
-                  placeholderTextColor={Colors.dark.textSecondary}
-                  onSubmitEditing={handleAddEmotion}
-                />
-                <Pressable onPress={handleAddEmotion} style={styles.addFieldButton}>
-                  <Feather name="plus" size={16} color={Colors.dark.text} />
-                </Pressable>
+              <View style={styles.addFieldContainer}>
+                <View style={styles.addFieldRow}>
+                  <TextInput
+                    style={styles.addFieldInput}
+                    value={newEmotionLabel}
+                    onChangeText={setNewEmotionLabel}
+                    placeholder="Add custom emotion..."
+                    placeholderTextColor={Colors.dark.textSecondary}
+                    onSubmitEditing={handleAddEmotion}
+                  />
+                  <Pressable onPress={handleAddEmotion} style={styles.addFieldButton}>
+                    <Feather name="plus" size={16} color={Colors.dark.text} />
+                  </Pressable>
+                </View>
+                <View style={styles.trackingTypeRow}>
+                  {TRACKING_TYPE_OPTIONS.map((option) => (
+                    <Pressable 
+                      key={option.value}
+                      style={[
+                        styles.trackingTypeOption,
+                        emotionTrackingType === option.value && styles.trackingTypeOptionSelected
+                      ]}
+                      onPress={() => setEmotionTrackingType(option.value)}
+                    >
+                      <ThemedText style={[
+                        styles.trackingTypeText,
+                        emotionTrackingType === option.value && styles.trackingTypeTextSelected
+                      ]}>
+                        {option.shortLabel}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
             ) : null}
           </View>
@@ -369,26 +413,48 @@ export default function LiveDiaryCard({
                 key={field.id}
                 label={field.label}
                 value={data.behaviors?.[field.id] ? true : false}
-                type="boolean"
+                type={getFieldType(field.trackingType)}
                 isGlowing={glowingFields.has(`behaviors.${field.id}`)}
+                scaleLabel={`(${getTrackingTypeLabel(field.trackingType)})`}
               />
             ))}
             {customBehaviors.length === 0 ? (
               <ThemedText style={styles.emptyText}>No behaviors tracked yet</ThemedText>
             ) : null}
             {onAddCustomBehavior ? (
-              <View style={styles.addFieldRow}>
-                <TextInput
-                  style={styles.addFieldInput}
-                  value={newBehaviorLabel}
-                  onChangeText={setNewBehaviorLabel}
-                  placeholder="Add custom behavior..."
-                  placeholderTextColor={Colors.dark.textSecondary}
-                  onSubmitEditing={handleAddBehavior}
-                />
-                <Pressable onPress={handleAddBehavior} style={styles.addFieldButton}>
-                  <Feather name="plus" size={16} color={Colors.dark.text} />
-                </Pressable>
+              <View style={styles.addFieldContainer}>
+                <View style={styles.addFieldRow}>
+                  <TextInput
+                    style={styles.addFieldInput}
+                    value={newBehaviorLabel}
+                    onChangeText={setNewBehaviorLabel}
+                    placeholder="Add custom behavior..."
+                    placeholderTextColor={Colors.dark.textSecondary}
+                    onSubmitEditing={handleAddBehavior}
+                  />
+                  <Pressable onPress={handleAddBehavior} style={styles.addFieldButton}>
+                    <Feather name="plus" size={16} color={Colors.dark.text} />
+                  </Pressable>
+                </View>
+                <View style={styles.trackingTypeRow}>
+                  {TRACKING_TYPE_OPTIONS.map((option) => (
+                    <Pressable 
+                      key={option.value}
+                      style={[
+                        styles.trackingTypeOption,
+                        behaviorTrackingType === option.value && styles.trackingTypeOptionSelected
+                      ]}
+                      onPress={() => setBehaviorTrackingType(option.value)}
+                    >
+                      <ThemedText style={[
+                        styles.trackingTypeText,
+                        behaviorTrackingType === option.value && styles.trackingTypeTextSelected
+                      ]}>
+                        {option.shortLabel}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
             ) : null}
           </View>
@@ -585,10 +651,12 @@ const styles = StyleSheet.create({
     color: Colors.dark.textSecondary,
     flex: 1,
   },
+  addFieldContainer: {
+    marginTop: 8,
+  },
   addFieldRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
     gap: 8,
   },
   addFieldInput: {
@@ -604,6 +672,28 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.accent,
     borderRadius: BorderRadius.sm,
     padding: 6,
+  },
+  trackingTypeRow: {
+    flexDirection: "row",
+    gap: 4,
+    marginTop: 6,
+  },
+  trackingTypeOption: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.dark.backgroundTertiary,
+  },
+  trackingTypeOptionSelected: {
+    backgroundColor: Colors.dark.accent,
+  },
+  trackingTypeText: {
+    fontSize: 9,
+    color: Colors.dark.textSecondary,
+  },
+  trackingTypeTextSelected: {
+    color: Colors.dark.text,
+    fontWeight: "500",
   },
   emptyText: {
     fontSize: 10,
