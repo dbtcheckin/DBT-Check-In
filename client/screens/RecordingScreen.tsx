@@ -140,15 +140,23 @@ export default function RecordingScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const wordToNumber = (word: string): number | null => {
+    const map: Record<string, number> = {
+      zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5,
+      "0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5,
+    };
+    return map[word.toLowerCase()] ?? null;
+  };
+
   const detectFields = useCallback((text: string, isAiMessage: boolean = false) => {
     const newData = { ...cardDataRef.current };
     const newGlow = new Set<string>();
     const newUncertain = new Set<string>();
 
-    const explicitMatches = text.matchAll(/\b(anxiety|anger|sadness|fear|shame|joy|misery|self-?harm|suicide|drugs|substances?|alcohol)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(\d)\s*(?:out of\s*5|\/\s*5)?/gi);
+    const explicitMatches = text.matchAll(/\b(anxiety|anger|sadness|fear|shame|joy|misery|self-?harm|suicide|drugs|substances?|alcohol)\s*(?:is\s*)?(?:at\s*)?(?:a\s*)?(zero|one|two|three|four|five|\d)(?:\s*(?:out of\s*5|\/\s*5))?/gi);
     for (const match of explicitMatches) {
       const field = match[1].toLowerCase().replace(/-/g, "_");
-      const value = parseInt(match[2]);
+      const value = wordToNumber(match[2]);
       
       const emotionMap: Record<string, string> = {
         anxiety: "anxiety",
@@ -170,29 +178,40 @@ export default function RecordingScreen() {
         alcohol: "alcohol",
       };
       
-      if (emotionMap[field]) {
-        const emoKey = emotionMap[field];
-        if (!newData.emotions[emoKey] || newData.emotions[emoKey].value === null) {
-          newData.emotions[emoKey] = { value, detected: true };
-          newGlow.add(`emotions.${emoKey}`);
-        }
-      } else if (urgeMap[field]) {
-        const urgeKey = urgeMap[field];
-        if (!newData.urges[urgeKey] || newData.urges[urgeKey].value === null) {
-          newData.urges[urgeKey] = { value, detected: true };
-          newGlow.add(`urges.${urgeKey}`);
+      if (value !== null) {
+        if (emotionMap[field]) {
+          const emoKey = emotionMap[field];
+          if (!newData.emotions[emoKey] || newData.emotions[emoKey].value === null) {
+            newData.emotions[emoKey] = { value, detected: true };
+            newGlow.add(`emotions.${emoKey}`);
+          }
+        } else if (urgeMap[field]) {
+          const urgeKey = urgeMap[field];
+          if (!newData.urges[urgeKey] || newData.urges[urgeKey].value === null) {
+            newData.urges[urgeKey] = { value, detected: true };
+            newGlow.add(`urges.${urgeKey}`);
+          }
         }
       }
     }
+
+    const parseContextNumber = (ctx: string): number | null => {
+      const numPattern = /(zero|one|two|three|four|five|\d)\s*(out of|\/)\s*5/i;
+      const atPattern = /at\s*(?:a\s*)?(zero|one|two|three|four|five|\d)/i;
+      const maybePattern = /maybe\s*(?:a\s*)?(zero|one|two|three|four|five|\d)/i;
+      const numMatch = ctx.match(numPattern) || ctx.match(maybePattern) || ctx.match(atPattern);
+      return numMatch ? wordToNumber(numMatch[1]) : null;
+    };
 
     Object.entries(DETECTION_PATTERNS.emotions).forEach(([emo, pattern]) => {
       const match = text.match(pattern);
       if (match && !newData.emotions[emo]) {
         const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
-        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/) || ctx.match(/at a (\d)/);
-        let val = numMatch ? parseInt(numMatch[1]) : 
-          DETECTION_PATTERNS.intensity.high.test(ctx) ? 4 :
-          DETECTION_PATTERNS.intensity.medium.test(ctx) ? 3 : null;
+        let val = parseContextNumber(ctx);
+        if (val === null) {
+          val = DETECTION_PATTERNS.intensity.high.test(ctx) ? 4 :
+            DETECTION_PATTERNS.intensity.medium.test(ctx) ? 3 : null;
+        }
         newData.emotions[emo] = { value: val, detected: true };
         newGlow.add(`emotions.${emo}`);
         if (val === null) newUncertain.add(`emotions.${emo}`);
@@ -203,8 +222,7 @@ export default function RecordingScreen() {
       const match = text.match(pattern);
       if (match && !newData.urges[urge]) {
         const ctx = text.substring(Math.max(0, match.index! - 50), match.index! + 50);
-        const numMatch = ctx.match(/(\d)\s*(out of|\/)\s*5/) || ctx.match(/maybe a (\d)/) || ctx.match(/at a (\d)/);
-        const val = numMatch ? parseInt(numMatch[1]) : null;
+        const val = parseContextNumber(ctx);
         newData.urges[urge] = { value: val, detected: true };
         newGlow.add(`urges.${urge}`);
         if (val === null) newUncertain.add(`urges.${urge}`);
