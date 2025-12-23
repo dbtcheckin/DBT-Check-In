@@ -387,35 +387,37 @@ export default function DiaryEntryDetailScreen() {
           </View>
 
           {displayMessages.length > 0 ? (
-            <Accordion title="Conversation" defaultExpanded={showTranscript}>
-              <View style={styles.transcriptSection}>
-                <ScrollView style={styles.transcriptScroll}>
-                  {displayMessages.map((message) => (
-                    <View key={message.id} style={styles.messageContainer}>
-                      <View style={[
-                        styles.speakerBadge,
-                        message.speaker === "user" ? styles.userBadge : styles.aiBadge
-                      ]}>
-                        <Feather 
-                          name={message.speaker === "user" ? "user" : "cpu"} 
-                          size={10} 
-                          color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
-                        />
-                        <ThemedText style={[
-                          styles.speakerLabel,
-                          message.speaker === "user" ? styles.userLabel : styles.aiLabel
+            <View style={styles.accordionWrapper}>
+              <Accordion title="Conversation" defaultExpanded={showTranscript}>
+                <View style={styles.conversationContent}>
+                  <ScrollView style={styles.transcriptScroll} nestedScrollEnabled>
+                    {displayMessages.map((message) => (
+                      <View key={message.id} style={styles.messageContainer}>
+                        <View style={[
+                          styles.speakerBadge,
+                          message.speaker === "user" ? styles.userBadge : styles.aiBadge
                         ]}>
-                          {message.speaker === "user" ? "You" : "AI"}
+                          <Feather 
+                            name={message.speaker === "user" ? "user" : "cpu"} 
+                            size={10} 
+                            color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
+                          />
+                          <ThemedText style={[
+                            styles.speakerLabel,
+                            message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                          ]}>
+                            {message.speaker === "user" ? "You" : "AI"}
+                          </ThemedText>
+                        </View>
+                        <ThemedText style={styles.messageText} fontFamily="serif">
+                          {message.text}
                         </ThemedText>
                       </View>
-                      <ThemedText style={styles.messageText} fontFamily="serif">
-                        {message.text}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            </Accordion>
+                    ))}
+                  </ScrollView>
+                </View>
+              </Accordion>
+            </View>
           ) : null}
 
           <View style={styles.notSupportedNotice}>
@@ -553,35 +555,37 @@ export default function DiaryEntryDetailScreen() {
                 </ScrollView>
               </View>
             ) : displayMessages.length > 0 ? (
-              <Accordion title="Conversation" defaultExpanded={showTranscript}>
-                <View style={styles.transcriptSection}>
-                  <ScrollView style={styles.transcriptScroll}>
-                    {displayMessages.map((message) => (
-                      <View key={message.id} style={styles.messageContainer}>
-                        <View style={[
-                          styles.speakerBadge,
-                          message.speaker === "user" ? styles.userBadge : styles.aiBadge
-                        ]}>
-                          <Feather 
-                            name={message.speaker === "user" ? "user" : "cpu"} 
-                            size={10} 
-                            color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
-                          />
-                          <ThemedText style={[
-                            styles.speakerLabel,
-                            message.speaker === "user" ? styles.userLabel : styles.aiLabel
+              <View style={styles.accordionWrapper}>
+                <Accordion title="Conversation" defaultExpanded={showTranscript}>
+                  <View style={styles.conversationContent}>
+                    <ScrollView style={styles.transcriptScroll} nestedScrollEnabled>
+                      {displayMessages.map((message) => (
+                        <View key={message.id} style={styles.messageContainer}>
+                          <View style={[
+                            styles.speakerBadge,
+                            message.speaker === "user" ? styles.userBadge : styles.aiBadge
                           ]}>
-                            {message.speaker === "user" ? "You" : "AI"}
+                            <Feather 
+                              name={message.speaker === "user" ? "user" : "cpu"} 
+                              size={10} 
+                              color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
+                            />
+                            <ThemedText style={[
+                              styles.speakerLabel,
+                              message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                            ]}>
+                              {message.speaker === "user" ? "You" : "AI"}
+                            </ThemedText>
+                          </View>
+                          <ThemedText style={styles.messageText} fontFamily="serif">
+                            {message.text}
                           </ThemedText>
                         </View>
-                        <ThemedText style={styles.messageText} fontFamily="serif">
-                          {message.text}
-                        </ThemedText>
-                      </View>
-                    ))}
-                  </ScrollView>
-                </View>
-              </Accordion>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </Accordion>
+              </View>
             ) : null}
           </ScrollView>
 
@@ -670,6 +674,12 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     marginBottom: Spacing.sm,
+  },
+  accordionWrapper: {
+    marginBottom: Spacing.lg,
+  },
+  conversationContent: {
+    maxHeight: 200,
   },
   transcriptSection: {
     backgroundColor: Colors.dark.backgroundDefault,
