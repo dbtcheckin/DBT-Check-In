@@ -85,7 +85,6 @@ export default function RecordingScreen() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [audioLevel, setAudioLevel] = useState(0);
   const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "connected" | "disconnected" | "error">("idle");
   const [cardData, setCardData] = useState<DiaryCardData>(emptyCardData);
   const [glowingFields, setGlowingFields] = useState<Set<string>>(new Set());
@@ -192,15 +191,6 @@ export default function RecordingScreen() {
         clearInterval(timerRef.current);
       }
     };
-  }, [isRecording]);
-
-  useEffect(() => {
-    if (isRecording) {
-      const interval = setInterval(() => {
-        setAudioLevel(0.3 + Math.random() * 0.5);
-      }, 150);
-      return () => clearInterval(interval);
-    }
   }, [isRecording]);
 
   const pulseStyle = useAnimatedStyle(() => ({
@@ -661,8 +651,6 @@ export default function RecordingScreen() {
     navigation.goBack();
   };
 
-  const orbSize = 80 + audioLevel * 15;
-
   const isWebPlatform = Platform.OS === "web";
 
   if (!isWebPlatform && !isSupported) {
@@ -754,31 +742,6 @@ export default function RecordingScreen() {
             </View>
           </ScrollView>
 
-          <View style={styles.orbSection}>
-            <Pressable
-              onPress={isRecording ? stopRecording : startRecording}
-              style={styles.orbContainer}
-              disabled={connectionState === "connecting"}
-            >
-              <View
-                style={[
-                  styles.orb,
-                  {
-                    width: orbSize,
-                    height: orbSize,
-                    backgroundColor: isRecording ? theme.backgroundTertiary : theme.backgroundSecondary,
-                    shadowColor: isRecording ? theme.accentGlow : "transparent",
-                    shadowOpacity: isRecording ? 0.8 : 0,
-                    shadowRadius: isRecording ? 25 + audioLevel * 20 : 0,
-                  },
-                ]}
-              />
-            </Pressable>
-            {connectionState === "connecting" ? (
-              <ThemedText style={styles.connectingText}>Connecting...</ThemedText>
-            ) : null}
-          </View>
-
           <View style={styles.transcriptSection}>
             <ScrollView
               ref={scrollViewRef}
@@ -845,6 +808,7 @@ export default function RecordingScreen() {
                 </View>
               ) : isRecording ? (
                 <View style={styles.doneButtonContent}>
+                  <View style={styles.connectedIndicator} />
                   <View style={styles.stopSquare} />
                   <ThemedText style={styles.doneButtonText}>Done</ThemedText>
                 </View>
@@ -910,27 +874,9 @@ const styles = StyleSheet.create({
   },
   cardScroll: {
     flex: 1,
-    maxHeight: "50%",
   },
   cardContainer: {
     marginBottom: Spacing.md,
-  },
-  orbSection: {
-    alignItems: "center",
-    paddingVertical: 20,
-  },
-  orbContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  orb: {
-    borderRadius: BorderRadius.full,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  connectingText: {
-    marginTop: Spacing.sm,
-    color: Colors.dark.textSecondary,
-    fontSize: 12,
   },
   transcriptSection: {
     flex: 1,
@@ -1015,6 +961,12 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 2,
     backgroundColor: Colors.dark.danger,
+  },
+  connectedIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#4ade80",
   },
   doneButtonText: {
     color: Colors.dark.text,
