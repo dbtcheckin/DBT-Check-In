@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           },
           output: {
-            voice: "sage",
+            voice: "marin",
             speed: 1.0
           }
         }
