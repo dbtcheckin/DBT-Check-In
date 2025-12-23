@@ -2,6 +2,7 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
 import RecordingScreen from "@/screens/RecordingScreen";
+import WeeklyRecordingScreen from "@/screens/WeeklyRecordingScreen";
 import AICompletionScreen from "@/screens/AICompletionScreen";
 import FinalReviewScreen from "@/screens/FinalReviewScreen";
 import SkillsLibraryScreen from "@/screens/SkillsLibraryScreen";
@@ -10,6 +11,7 @@ import { useScreenOptions } from "@/hooks/useScreenOptions";
 export type RootStackParamList = {
   Main: undefined;
   Recording: undefined;
+  WeeklyRecording: undefined;
   AICompletion: {
     transcript: string;
     extractedData: ExtractedData;
@@ -56,6 +58,14 @@ export default function RootStackNavigator() {
       <Stack.Screen
         name="Recording"
         component={RecordingScreen}
+        options={{
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="WeeklyRecording"
+        component={WeeklyRecordingScreen}
         options={{
           presentation: "modal",
           headerShown: false,

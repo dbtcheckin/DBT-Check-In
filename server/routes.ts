@@ -428,6 +428,36 @@ Respond with valid JSON only:
     }
   });
 
+  // Weekly session data endpoint
+  app.post("/api/weekly-session", async (req, res) => {
+    try {
+      const { weekEndDate, weeklySession } = req.body;
+      
+      if (!weekEndDate || !weeklySession) {
+        return res.status(400).json({ error: "Week end date and weekly session data are required" });
+      }
+
+      let entry = await storage.getDiaryEntryByDate(weekEndDate);
+      
+      if (entry) {
+        entry = await storage.updateDiaryEntry(entry.id, {
+          weeklySession,
+        });
+      } else {
+        entry = await storage.createDiaryEntry({
+          date: weekEndDate,
+          weeklySession,
+          complete: false,
+        });
+      }
+      
+      res.json(entry);
+    } catch (error) {
+      console.error("Weekly session save error:", error);
+      res.status(500).json({ error: "Failed to save weekly session data" });
+    }
+  });
+
   // Audio transcription endpoint
   app.post("/api/transcribe", async (req, res) => {
     try {

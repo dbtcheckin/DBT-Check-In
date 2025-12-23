@@ -1,15 +1,20 @@
 import React from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import { Colors, Spacing, BorderRadius, SkillDisplayNames, EmotionColors } from "@/constants/theme";
+import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { DiaryEntry } from "@shared/schema";
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 function getWeekDates() {
   const today = new Date();
@@ -36,6 +41,7 @@ export default function WeeklyReviewScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
+  const navigation = useNavigation<NavigationProp>();
   const theme = Colors.dark;
 
   const weekDates = getWeekDates();
@@ -143,6 +149,29 @@ export default function WeeklyReviewScreen() {
           </ThemedText>
         </View>
       </Card>
+
+      <Pressable
+        onPress={() => navigation.navigate("WeeklyRecording")}
+        style={({ pressed }) => [
+          styles.weeklyRecordCard,
+          pressed && styles.weeklyRecordCardPressed,
+        ]}
+      >
+        <View style={styles.weeklyRecordContent}>
+          <View style={styles.weeklyRecordIcon}>
+            <Feather name="clipboard" size={20} color={Colors.dark.accent} />
+          </View>
+          <View style={styles.weeklyRecordText}>
+            <ThemedText style={styles.weeklyRecordTitle}>
+              Weekly Check-In
+            </ThemedText>
+            <ThemedText style={styles.weeklyRecordSubtitle}>
+              Pre-session ratings and weekly sections
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={20} color={Colors.dark.textTertiary} />
+        </View>
+      </Pressable>
 
       {emotionAverages.length > 0 && (
         <Card elevation={1} style={styles.section}>
@@ -297,6 +326,43 @@ const styles = StyleSheet.create({
   },
   completionLabel: {
     color: Colors.dark.textSecondary,
+  },
+  weeklyRecordCard: {
+    backgroundColor: Colors.dark.backgroundDefault,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.dark.accent,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  weeklyRecordCardPressed: {
+    opacity: 0.8,
+  },
+  weeklyRecordContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  weeklyRecordIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.dark.accentMuted,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: Spacing.md,
+  },
+  weeklyRecordText: {
+    flex: 1,
+  },
+  weeklyRecordTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.dark.text,
+  },
+  weeklyRecordSubtitle: {
+    fontSize: 13,
+    color: Colors.dark.textSecondary,
+    marginTop: 2,
   },
   section: {
     marginBottom: Spacing.md,
