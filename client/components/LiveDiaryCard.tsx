@@ -164,6 +164,8 @@ type LiveDiaryCardProps = {
   customBehaviors?: CustomFieldConfig[];
   onAddCustomEmotion?: (label: string, trackingType: TrackingType, scaleMax?: number) => void;
   onAddCustomBehavior?: (label: string, trackingType: TrackingType, scaleMax?: number) => void;
+  onDeleteCustomEmotion?: (fieldId: string) => void;
+  onDeleteCustomBehavior?: (fieldId: string) => void;
 };
 
 export default function LiveDiaryCard({ 
@@ -174,6 +176,8 @@ export default function LiveDiaryCard({
   customBehaviors = [],
   onAddCustomEmotion,
   onAddCustomBehavior,
+  onDeleteCustomEmotion,
+  onDeleteCustomBehavior,
 }: LiveDiaryCardProps) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const [newEmotionLabel, setNewEmotionLabel] = useState("");
@@ -182,6 +186,7 @@ export default function LiveDiaryCard({
   const [behaviorTrackingType, setBehaviorTrackingType] = useState<TrackingType>("boolean");
   const [emotionScaleMax, setEmotionScaleMax] = useState("5");
   const [behaviorScaleMax, setBehaviorScaleMax] = useState("5");
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const hasOptionalEmotions = OPTIONAL_EMOTIONS.some(
     (field) => data.emotions[field.id]?.value != null
@@ -358,7 +363,14 @@ export default function LiveDiaryCard({
       >
         <View style={styles.row}>
           <View style={styles.column}>
-            <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
+            <View style={styles.subsectionHeader}>
+              <ThemedText style={styles.subsectionTitle}>Core Emotions (0-5)</ThemedText>
+              {(customEmotions.length > 0 || customBehaviors.length > 0) ? (
+                <Pressable onPress={() => setIsEditMode(!isEditMode)} style={styles.editButton}>
+                  <Feather name={isEditMode ? "check" : "edit-2"} size={12} color={Colors.dark.textSecondary} />
+                </Pressable>
+              ) : null}
+            </View>
             {OPTIONAL_EMOTIONS.map((field) => (
               <FieldCell
                 key={field.id}
@@ -370,14 +382,25 @@ export default function LiveDiaryCard({
               />
             ))}
             {customEmotions.map((field) => (
-              <FieldCell
-                key={field.id}
-                label={field.label}
-                value={data.emotions[field.id]?.value}
-                isGlowing={glowingFields.has(`emotions.${field.id}`)}
-                type={getFieldType(field.trackingType)}
-                scaleLabel={`(${getTrackingTypeLabel(field)})`}
-              />
+              <View key={field.id} style={styles.editableFieldRow}>
+                {isEditMode && onDeleteCustomEmotion ? (
+                  <Pressable 
+                    onPress={() => onDeleteCustomEmotion(field.id)} 
+                    style={styles.deleteButton}
+                  >
+                    <Feather name="trash-2" size={12} color={Colors.dark.error} />
+                  </Pressable>
+                ) : null}
+                <View style={styles.editableFieldContent}>
+                  <FieldCell
+                    label={field.label}
+                    value={data.emotions[field.id]?.value}
+                    isGlowing={glowingFields.has(`emotions.${field.id}`)}
+                    type={getFieldType(field.trackingType)}
+                    scaleLabel={`(${getTrackingTypeLabel(field)})`}
+                  />
+                </View>
+              </View>
             ))}
             {onAddCustomEmotion ? (
               <View style={styles.addFieldContainer}>
@@ -438,14 +461,25 @@ export default function LiveDiaryCard({
           <View style={styles.column}>
             <ThemedText style={styles.subsectionTitle}>Behaviors</ThemedText>
             {customBehaviors.map((field) => (
-              <FieldCell
-                key={field.id}
-                label={field.label}
-                value={data.behaviors?.[field.id] ? true : false}
-                type={getFieldType(field.trackingType)}
-                isGlowing={glowingFields.has(`behaviors.${field.id}`)}
-                scaleLabel={`(${getTrackingTypeLabel(field)})`}
-              />
+              <View key={field.id} style={styles.editableFieldRow}>
+                {isEditMode && onDeleteCustomBehavior ? (
+                  <Pressable 
+                    onPress={() => onDeleteCustomBehavior(field.id)} 
+                    style={styles.deleteButton}
+                  >
+                    <Feather name="trash-2" size={12} color={Colors.dark.error} />
+                  </Pressable>
+                ) : null}
+                <View style={styles.editableFieldContent}>
+                  <FieldCell
+                    label={field.label}
+                    value={data.behaviors?.[field.id] ? true : false}
+                    type={getFieldType(field.trackingType)}
+                    isGlowing={glowingFields.has(`behaviors.${field.id}`)}
+                    scaleLabel={`(${getTrackingTypeLabel(field)})`}
+                  />
+                </View>
+              </View>
             ))}
             {customBehaviors.length === 0 ? (
               <ThemedText style={styles.emptyText}>No behaviors tracked yet</ThemedText>
