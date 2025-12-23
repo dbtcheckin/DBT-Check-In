@@ -381,7 +381,7 @@ export default function LiveDiaryCard({
             ))}
             {onAddCustomEmotion ? (
               <View style={styles.addFieldContainer}>
-                <View style={styles.addFieldRow}>
+                <View style={[styles.addFieldRow, { paddingRight: 4 }]}>
                   <TextInput
                     style={styles.addFieldInput}
                     value={newEmotionLabel}
@@ -452,7 +452,7 @@ export default function LiveDiaryCard({
             ) : null}
             {onAddCustomBehavior ? (
               <View style={styles.addFieldContainer}>
-                <View style={styles.addFieldRow}>
+                <View style={[styles.addFieldRow, { paddingRight: 4 }]}>
                   <TextInput
                     style={styles.addFieldInput}
                     value={newBehaviorLabel}
