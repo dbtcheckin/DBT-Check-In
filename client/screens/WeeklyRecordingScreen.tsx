@@ -22,28 +22,47 @@ import type { WeeklySessionData } from "@shared/schema";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const SESSION_URGES = [
-  { id: "quit_therapy", label: "Urge to quit therapy" },
-  { id: "use_drugs", label: "Urge to use drugs" },
-  { id: "suicide", label: "Urge to commit suicide" },
+  { id: "quit_therapy", label: "Quit Therapy" },
+  { id: "use_drugs", label: "Use Drugs" },
+  { id: "suicide", label: "Suicide" },
 ];
 
 const BELIEFS = [
-  { id: "regulate_emotions", label: "Belief I can regulate emotions" },
-  { id: "regulate_actions", label: "Belief I can regulate actions" },
-  { id: "regulate_thoughts", label: "Belief I can regulate thoughts" },
+  { id: "regulate_emotions", label: "Emotions" },
+  { id: "regulate_actions", label: "Actions" },
+  { id: "regulate_thoughts", label: "Thoughts" },
 ];
 
-function RatingSelector({
+function InlineRatingRow({
+  label,
   value,
   onChange,
-  label,
 }: {
+  label: string;
   value: number | null;
   onChange: (val: number) => void;
-  label: string;
 }) {
-  const theme = Colors.dark;
-  
+  return (
+    <View style={styles.inlineRow}>
+      <ThemedText style={styles.inlineLabel}>{label}</ThemedText>
+      <View style={styles.inlineValue}>
+        <ThemedText style={styles.valueText} fontFamily="mono">
+          {value !== null ? value : "-"}
+        </ThemedText>
+      </View>
+    </View>
+  );
+}
+
+function RatingSelector({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (val: number) => void;
+}) {
   return (
     <View style={styles.ratingRow}>
       <ThemedText style={styles.ratingLabel}>{label}</ThemedText>
@@ -101,6 +120,7 @@ export default function WeeklyRecordingScreen() {
   const [homework, setHomework] = useState("");
   const [skillsFocus, setSkillsFocus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [transcript, setTranscript] = useState("");
 
   const saveMutation = useMutation({
     mutationFn: async (weeklyData: WeeklySessionData) => {
@@ -116,6 +136,7 @@ export default function WeeklyRecordingScreen() {
   });
 
   const handleSave = async () => {
+    if (!isComplete) return;
     setIsSaving(true);
     const weeklyData: WeeklySessionData = {
       sessionUrges,
@@ -132,44 +153,70 @@ export default function WeeklyRecordingScreen() {
     }
   };
 
+  const handleStartRecording = () => {
+    // TODO: Implement voice recording for weekly entries
+    // For now, this is a placeholder that shows recording is available
+  };
+
   const isComplete = Object.keys(sessionUrges).length >= 3 && Object.keys(beliefs).length >= 3;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
         <Pressable onPress={() => navigation.goBack()} style={styles.closeButton}>
-          <Feather name="x" size={24} color={theme.text} />
+          <ThemedText style={styles.cancelText}>Cancel</ThemedText>
         </Pressable>
-        <View style={styles.headerCenter}>
-          <ThemedText style={styles.headerTitle}>Weekly Check-In</ThemedText>
-          <ThemedText style={styles.headerSubtitle}>{start} - {end}</ThemedText>
-        </View>
-        <Pressable
-          onPress={isComplete ? handleSave : undefined}
-          disabled={isSaving || !isComplete}
-          style={[styles.saveButton, (!isComplete || isSaving) && styles.saveButtonDisabled]}
-        >
-          <ThemedText style={[styles.saveButtonText, !isComplete && styles.saveButtonTextDisabled]}>
-            {isSaving ? "Saving..." : "Save"}
-          </ThemedText>
-        </Pressable>
+        <ThemedText style={styles.timerText} fontFamily="mono">0:00</ThemedText>
       </View>
 
       <KeyboardAwareScrollViewCompat
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: insets.bottom + Spacing.xl },
+          { paddingBottom: 100 + insets.bottom },
         ]}
       >
-        <Card elevation={1} style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="caption">
-            SESSION TRACKING (0-5)
+        <Card elevation={1} style={styles.titleCard}>
+          <ThemedText style={styles.cardTitle} fontFamily="mono">
+            WEEKLY DIARY CARD - {start.toUpperCase()} TO {end.toUpperCase()}
           </ThemedText>
-          <ThemedText style={styles.sectionDescription} type="small">
-            Rate your current state coming into session
+        </Card>
+
+        <View style={styles.twoColumnSection}>
+          <View style={styles.column}>
+            <ThemedText style={styles.columnHeader} type="caption">
+              SESSION URGES (0-5)
+            </ThemedText>
+            {SESSION_URGES.map((urge) => (
+              <InlineRatingRow
+                key={urge.id}
+                label={urge.label}
+                value={sessionUrges[urge.id] ?? null}
+                onChange={(val) => setSessionUrges((prev) => ({ ...prev, [urge.id]: val }))}
+              />
+            ))}
+          </View>
+          <View style={styles.column}>
+            <ThemedText style={styles.columnHeader} type="caption">
+              BELIEFS (0-5)
+            </ThemedText>
+            {BELIEFS.map((belief) => (
+              <InlineRatingRow
+                key={belief.id}
+                label={belief.label}
+                value={beliefs[belief.id] ?? null}
+                onChange={(val) => setBeliefs((prev) => ({ ...prev, [belief.id]: val }))}
+              />
+            ))}
+          </View>
+        </View>
+
+        <Card elevation={1} style={styles.ratingsCard}>
+          <ThemedText style={styles.sectionTitle} type="caption">
+            TAP TO SET RATINGS
           </ThemedText>
           
+          <ThemedText style={styles.subsectionTitle}>Session Urges</ThemedText>
           {SESSION_URGES.map((urge) => (
             <RatingSelector
               key={urge.id}
@@ -178,16 +225,8 @@ export default function WeeklyRecordingScreen() {
               onChange={(val) => setSessionUrges((prev) => ({ ...prev, [urge.id]: val }))}
             />
           ))}
-        </Card>
 
-        <Card elevation={1} style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="caption">
-            BELIEFS ABOUT SELF-REGULATION (0-5)
-          </ThemedText>
-          <ThemedText style={styles.sectionDescription} type="small">
-            Rate your confidence in your ability to regulate
-          </ThemedText>
-          
+          <ThemedText style={[styles.subsectionTitle, { marginTop: Spacing.md }]}>Beliefs</ThemedText>
           {BELIEFS.map((belief) => (
             <RatingSelector
               key={belief.id}
@@ -198,15 +237,13 @@ export default function WeeklyRecordingScreen() {
           ))}
         </Card>
 
-        <Card elevation={1} style={styles.section}>
+        <Card elevation={1} style={styles.weeklySectionsCard}>
           <ThemedText style={styles.sectionTitle} type="caption">
             WEEKLY SECTIONS
           </ThemedText>
           
           <View style={styles.textInputGroup}>
-            <ThemedText style={styles.inputLabel}>
-              Medication changes this week
-            </ThemedText>
+            <ThemedText style={styles.inputLabel}>Medication Changes</ThemedText>
             <TextInput
               style={styles.textInput}
               value={medChanges}
@@ -214,41 +251,74 @@ export default function WeeklyRecordingScreen() {
               placeholder="Any changes to your medications?"
               placeholderTextColor={theme.textTertiary}
               multiline
-              numberOfLines={2}
             />
           </View>
 
           <View style={styles.textInputGroup}>
-            <ThemedText style={styles.inputLabel}>
-              Homework assigned and results
-            </ThemedText>
+            <ThemedText style={styles.inputLabel}>Homework</ThemedText>
             <TextInput
               style={styles.textInput}
               value={homework}
               onChangeText={setHomework}
-              placeholder="What homework was assigned and what were your results?"
+              placeholder="Assigned and results"
               placeholderTextColor={theme.textTertiary}
               multiline
-              numberOfLines={3}
             />
           </View>
 
           <View style={styles.textInputGroup}>
-            <ThemedText style={styles.inputLabel}>
-              Skills focus this week
-            </ThemedText>
+            <ThemedText style={styles.inputLabel}>Skills Focus</ThemedText>
             <TextInput
               style={styles.textInput}
               value={skillsFocus}
               onChangeText={setSkillsFocus}
-              placeholder="What skills did you focus on or want to focus on?"
+              placeholder="Skills to focus on this week"
               placeholderTextColor={theme.textTertiary}
               multiline
-              numberOfLines={3}
             />
           </View>
         </Card>
+
+        <View style={styles.transcriptArea}>
+          <ThemedText style={styles.transcriptPlaceholder} fontFamily="serif">
+            Speak about your week...
+          </ThemedText>
+        </View>
       </KeyboardAwareScrollViewCompat>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
+        <Pressable
+          onPress={handleStartRecording}
+          style={({ pressed }) => [
+            styles.recordButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <View style={styles.buttonContent}>
+            <Feather name="mic" size={18} color={theme.text} />
+            <ThemedText style={styles.recordButtonText}>Start Recording</ThemedText>
+          </View>
+        </Pressable>
+
+        {isComplete ? (
+          <Pressable
+            onPress={handleSave}
+            disabled={isSaving}
+            style={({ pressed }) => [
+              styles.saveButtonSmall,
+              pressed && styles.buttonPressed,
+              isSaving && styles.buttonDisabled,
+            ]}
+          >
+            <View style={styles.buttonContent}>
+              <Feather name="check" size={16} color={Colors.dark.backgroundRoot} />
+              <ThemedText style={styles.saveButtonText}>
+                {isSaving ? "Saving..." : "Save"}
+              </ThemedText>
+            </View>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -259,85 +329,111 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.dark.border,
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingBottom: 12,
   },
   closeButton: {
     padding: Spacing.xs,
   },
-  headerCenter: {
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: Colors.dark.text,
-  },
-  headerSubtitle: {
-    fontSize: 13,
+  cancelText: {
     color: Colors.dark.textSecondary,
-    marginTop: 2,
+    fontSize: 14,
   },
-  saveButton: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.dark.accent,
-    borderRadius: BorderRadius.md,
-  },
-  saveButtonDisabled: {
-    backgroundColor: Colors.dark.backgroundSecondary,
-  },
-  saveButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: Colors.dark.backgroundRoot,
-  },
-  saveButtonTextDisabled: {
-    color: Colors.dark.textTertiary,
+  timerText: {
+    color: Colors.dark.textSecondary,
+    fontSize: 13,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: Spacing.lg,
+    padding: 14,
   },
-  section: {
-    marginBottom: Spacing.lg,
-    padding: Spacing.lg,
+  titleCard: {
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    alignItems: "center",
+  },
+  cardTitle: {
+    fontSize: 11,
+    color: Colors.dark.textSecondary,
+    letterSpacing: 1,
+  },
+  twoColumnSection: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  column: {
+    flex: 1,
+    backgroundColor: Colors.dark.backgroundDefault,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  columnHeader: {
+    color: Colors.dark.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    fontSize: 9,
+    marginBottom: Spacing.xs,
+  },
+  inlineRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  inlineLabel: {
+    fontSize: 12,
+    color: Colors.dark.text,
+  },
+  inlineValue: {
+    minWidth: 24,
+    alignItems: "flex-end",
+  },
+  valueText: {
+    fontSize: 12,
+    color: Colors.dark.textTertiary,
+  },
+  ratingsCard: {
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     color: Colors.dark.textTertiary,
     textTransform: "uppercase",
     letterSpacing: 1,
+    fontSize: 10,
+    marginBottom: Spacing.sm,
+  },
+  subsectionTitle: {
+    fontSize: 13,
+    color: Colors.dark.accent,
     marginBottom: Spacing.xs,
   },
-  sectionDescription: {
-    color: Colors.dark.textSecondary,
-    marginBottom: Spacing.lg,
-  },
   ratingRow: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   ratingLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: Colors.dark.text,
-    marginBottom: Spacing.sm,
+    marginBottom: 4,
   },
   ratingButtons: {
     flexDirection: "row",
-    gap: Spacing.xs,
+    gap: 6,
   },
   ratingButton: {
-    flex: 1,
+    width: 44,
     height: 44,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: Colors.dark.backgroundSecondary,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.dark.border,
   },
@@ -346,30 +442,96 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.accent,
   },
   ratingButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.dark.textSecondary,
   },
   ratingButtonTextActive: {
     color: Colors.dark.backgroundRoot,
     fontWeight: "600",
   },
+  weeklySectionsCard: {
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+  },
   textInputGroup: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   inputLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: Colors.dark.text,
-    marginBottom: Spacing.sm,
+    marginBottom: 4,
   },
   textInput: {
     backgroundColor: Colors.dark.backgroundSecondary,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.sm,
     borderWidth: 1,
     borderColor: Colors.dark.border,
-    padding: Spacing.md,
-    fontSize: 15,
+    padding: Spacing.sm,
+    fontSize: 14,
     color: Colors.dark.text,
-    minHeight: 60,
+    minHeight: 44,
     textAlignVertical: "top",
+  },
+  transcriptArea: {
+    backgroundColor: Colors.dark.backgroundDefault,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+    minHeight: 60,
+  },
+  transcriptPlaceholder: {
+    color: Colors.dark.textTertiary,
+    fontStyle: "italic",
+  },
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    paddingHorizontal: 14,
+    paddingTop: Spacing.md,
+    backgroundColor: Colors.dark.backgroundRoot,
+  },
+  recordButton: {
+    flex: 1,
+    backgroundColor: Colors.dark.backgroundSecondary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  saveButtonSmall: {
+    marginLeft: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.dark.accent,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonPressed: {
+    opacity: 0.8,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  recordButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.dark.text,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.dark.backgroundRoot,
   },
 });
