@@ -408,7 +408,7 @@ export default function LiveDiaryCard({
                         styles.trackingTypeText,
                         emotionTrackingType === option.value && styles.trackingTypeTextSelected
                       ]}>
-                        {option.value === "scale" ? `0-` : option.shortLabel}
+                        {option.value === "scale" ? `0 -` : option.shortLabel}
                       </ThemedText>
                       {option.value === "scale" ? (
                         <TextInput
@@ -479,7 +479,7 @@ export default function LiveDiaryCard({
                         styles.trackingTypeText,
                         behaviorTrackingType === option.value && styles.trackingTypeTextSelected
                       ]}>
-                        {option.value === "scale" ? `0-` : option.shortLabel}
+                        {option.value === "scale" ? `0 -` : option.shortLabel}
                       </ThemedText>
                       {option.value === "scale" ? (
                         <TextInput
@@ -737,13 +737,13 @@ const styles = StyleSheet.create({
   scaleMaxInput: {
     backgroundColor: Colors.dark.backgroundRoot,
     borderRadius: 2,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     paddingVertical: 0,
     fontSize: 9,
     color: Colors.dark.textSecondary,
-    width: 32,
+    width: 26,
     textAlign: "center",
-    marginLeft: 4,
+    marginLeft: 2,
   },
   scaleMaxInputSelected: {
     backgroundColor: Colors.dark.backgroundTertiary,
