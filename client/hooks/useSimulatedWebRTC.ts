@@ -15,6 +15,8 @@ export function useSimulatedWebRTC() {
 
   const handleSimulationEvent = useCallback((event: SimulationEvent) => {
     if (event.type === "simulation_ended") {
+      webRTC.cancelResponse();
+      
       webRTC.sendEvent({
         type: "session.update",
         session: {
@@ -22,12 +24,21 @@ export function useSimulatedWebRTC() {
           instructions: "You are now back in DBT diary card assistant mode. Resume your helpful, conversational approach to collecting diary card data. Ask about urges, emotions, actions, substances, and skills as normal.",
         },
       });
+      
+      setTimeout(() => {
+        webRTC.sendEvent({
+          type: "response.create",
+          response: {
+            modalities: ["text", "audio"],
+          },
+        });
+      }, 100);
     }
     
     if (simulationStateCallbackRef.current) {
       simulationStateCallbackRef.current(simulation.simulationState);
     }
-  }, [simulation.simulationState, webRTC.sendEvent]);
+  }, [simulation.simulationState, webRTC.sendEvent, webRTC.cancelResponse]);
 
   useEffect(() => {
     simulation.setEventCallback(handleSimulationEvent);
@@ -50,6 +61,8 @@ export function useSimulatedWebRTC() {
         const result = simulation.processMessage(lastMessage.text, true);
         
         if (result.enteredSimulation) {
+          webRTC.cancelResponse();
+          
           const systemMessage: ConversationMessage = {
             id: `sim-start-${Date.now()}`,
             speaker: "ai",
@@ -58,9 +71,35 @@ export function useSimulatedWebRTC() {
             timestamp: Date.now(),
           };
           messages = [...messages, systemMessage];
-        }
-        
-        if (result.sessionUpdate) {
+          
+          if (result.sessionUpdate) {
+            webRTC.sendEvent(result.sessionUpdate);
+            
+            setTimeout(() => {
+              webRTC.sendEvent({
+                type: "response.create",
+                response: {
+                  modalities: ["text", "audio"],
+                },
+              });
+            }, 100);
+          }
+        } else if (result.exitedSimulation) {
+          webRTC.cancelResponse();
+          
+          if (result.sessionUpdate) {
+            webRTC.sendEvent(result.sessionUpdate);
+            
+            setTimeout(() => {
+              webRTC.sendEvent({
+                type: "response.create",
+                response: {
+                  modalities: ["text", "audio"],
+                },
+              });
+            }, 100);
+          }
+        } else if (result.sessionUpdate) {
           webRTC.sendEvent(result.sessionUpdate);
         }
         
@@ -76,7 +115,7 @@ export function useSimulatedWebRTC() {
 
     simulation.resetSimulation();
     return webRTC.connectRealtime(onTranscript, onConnectionState, wrappedMessageCallback);
-  }, [webRTC.connectRealtime, webRTC.sendEvent, simulation]);
+  }, [webRTC.connectRealtime, webRTC.sendEvent, webRTC.cancelResponse, simulation]);
 
   const disconnectWithSimulation = useCallback(() => {
     simulation.resetSimulation();
