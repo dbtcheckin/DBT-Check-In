@@ -42,6 +42,7 @@ export function useWebRTC() {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [remoteStream, setRemoteStream] = useState<any>(null);
+  const [isMuted, setIsMuted] = useState(false);
 
   const generateMessageId = () => {
     messageIdCounterRef.current += 1;
@@ -87,6 +88,7 @@ export function useWebRTC() {
 
       const localStream = await mediaDevices.getUserMedia({ audio: true });
       localStreamRef.current = localStream;
+      setIsMuted(false);
       
       localStream.getTracks().forEach((track: any) => {
         pc.addTrack(track, localStream);
@@ -311,6 +313,16 @@ export function useWebRTC() {
     return messagesRef.current;
   }, []);
 
+  const toggleMute = useCallback(() => {
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      audioTracks.forEach((track: any) => {
+        track.enabled = !track.enabled;
+      });
+      setIsMuted((prev) => !prev);
+    }
+  }, []);
+
   return {
     connectRealtime,
     disconnect,
@@ -318,7 +330,9 @@ export function useWebRTC() {
     cancelResponse,
     getTranscript,
     getMessages,
+    toggleMute,
     isConnected,
+    isMuted,
     connectionError,
     remoteStream,
     isSupported: isWebRTCSupported,

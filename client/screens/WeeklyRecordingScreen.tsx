@@ -113,7 +113,7 @@ export default function WeeklyRecordingScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const cardDataRef = useRef<WeeklyCardData>(createEmptyCardData());
 
-  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, toggleMute, isMuted } = useWebRTC();
 
   const pulseOpacity = useSharedValue(1);
 
@@ -449,6 +449,18 @@ export default function WeeklyRecordingScreen() {
           </View>
 
           <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
+            {isRecording ? (
+              <Pressable
+                onPress={toggleMute}
+                style={({ pressed }) => [
+                  styles.muteButton,
+                  isMuted && styles.muteButtonActive,
+                  pressed && styles.muteButtonPressed,
+                ]}
+              >
+                <Feather name={isMuted ? "mic-off" : "mic"} size={20} color={isMuted ? theme.danger : theme.text} />
+              </Pressable>
+            ) : null}
             <Pressable
               onPress={isRecording ? stopRecording : startRecording}
               disabled={connectionState === "connecting"}
@@ -703,5 +715,22 @@ const styles = StyleSheet.create({
     color: Colors.dark.backgroundRoot,
     fontSize: 15,
     fontWeight: "600",
+  },
+  muteButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.dark.backgroundSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  muteButtonActive: {
+    backgroundColor: Colors.dark.backgroundTertiary,
+    borderColor: Colors.dark.danger,
+  },
+  muteButtonPressed: {
+    opacity: 0.7,
   },
 });

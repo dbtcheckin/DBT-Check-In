@@ -184,7 +184,7 @@ export default function DiaryEntryDetailScreen() {
     deleteBehaviorMutation.mutate(fieldId);
   };
 
-  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported } = useSimulatedWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, toggleMute, isMuted } = useSimulatedWebRTC();
   
   const handleSimulationStateChange = useCallback((state: SimulationState) => {
     setSimulationState(state);
@@ -605,6 +605,18 @@ export default function DiaryEntryDetailScreen() {
           </ScrollView>
 
           <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
+            {isRecording ? (
+              <Pressable
+                onPress={toggleMute}
+                style={({ pressed }) => [
+                  styles.muteButton,
+                  isMuted && styles.muteButtonActive,
+                  pressed && styles.muteButtonPressed,
+                ]}
+              >
+                <Feather name={isMuted ? "mic-off" : "mic"} size={20} color={isMuted ? theme.danger : theme.text} />
+              </Pressable>
+            ) : null}
             <Pressable
               onPress={isRecording ? stopRecording : startRecording}
               disabled={connectionState === "connecting"}
@@ -865,5 +877,22 @@ const styles = StyleSheet.create({
     flex: 1,
     color: Colors.dark.textTertiary,
     fontSize: 13,
+  },
+  muteButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.dark.backgroundSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  muteButtonActive: {
+    backgroundColor: Colors.dark.backgroundTertiary,
+    borderColor: Colors.dark.danger,
+  },
+  muteButtonPressed: {
+    opacity: 0.7,
   },
 });

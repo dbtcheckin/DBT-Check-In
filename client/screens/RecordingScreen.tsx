@@ -168,7 +168,7 @@ export default function RecordingScreen() {
     deleteBehaviorMutation.mutate(fieldId);
   };
 
-  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, simulationState: simState } = useSimulatedWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, simulationState: simState, toggleMute, isMuted } = useSimulatedWebRTC();
   
   const handleSimulationStateChange = useCallback((state: SimulationState) => {
     setSimulationState(state);
@@ -815,6 +815,18 @@ export default function RecordingScreen() {
           </ScrollView>
 
           <View style={[styles.footer, { bottom: insets.bottom + Spacing.md }]}>
+            {isRecording ? (
+              <Pressable
+                onPress={toggleMute}
+                style={({ pressed }) => [
+                  styles.muteButton,
+                  isMuted && styles.muteButtonActive,
+                  pressed && styles.muteButtonPressed,
+                ]}
+              >
+                <Feather name={isMuted ? "mic-off" : "mic"} size={20} color={isMuted ? theme.danger : theme.text} />
+              </Pressable>
+            ) : null}
             <Pressable
               onPress={isRecording ? stopRecording : startRecording}
               disabled={connectionState === "connecting"}
@@ -1033,5 +1045,25 @@ const styles = StyleSheet.create({
     color: "#1a1d21",
     fontSize: 16,
     fontWeight: "600",
+  },
+  muteButton: {
+    position: "absolute",
+    right: 0,
+    top: -56,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.dark.backgroundSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+  },
+  muteButtonActive: {
+    backgroundColor: Colors.dark.backgroundTertiary,
+    borderColor: Colors.dark.danger,
+  },
+  muteButtonPressed: {
+    opacity: 0.7,
   },
 });
