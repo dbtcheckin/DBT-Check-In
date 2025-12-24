@@ -168,7 +168,35 @@ export default function RecordingScreen() {
     deleteBehaviorMutation.mutate(fieldId);
   };
 
-  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, simulationState: simState, toggleMute, isMuted } = useSimulatedWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, simulationState: simState, toggleMute, setMutedState, isMuted } = useSimulatedWebRTC();
+  
+  const [isHoldActive, setIsHoldActive] = useState(false);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const HOLD_THRESHOLD_MS = 150;
+
+  const handleMicPressIn = useCallback(() => {
+    holdTimeoutRef.current = setTimeout(() => {
+      setIsHoldActive(true);
+      setMutedState(false);
+    }, HOLD_THRESHOLD_MS);
+  }, [setMutedState]);
+
+  const handleMicPressOut = useCallback(() => {
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    if (isHoldActive) {
+      setMutedState(true);
+      setIsHoldActive(false);
+    }
+  }, [isHoldActive, setMutedState]);
+
+  const handleMicPress = useCallback(() => {
+    if (!isHoldActive) {
+      toggleMute();
+    }
+  }, [isHoldActive, toggleMute]);
   
   const handleSimulationStateChange = useCallback((state: SimulationState) => {
     setSimulationState(state);
@@ -817,12 +845,16 @@ export default function RecordingScreen() {
           <View style={[styles.footer, { bottom: insets.bottom + Spacing.md }]}>
             {isRecording ? (
               <Pressable
-                onPress={toggleMute}
+                onPressIn={handleMicPressIn}
+                onPressOut={handleMicPressOut}
+                onPress={handleMicPress}
                 style={({ pressed }) => [
                   styles.muteButton,
                   isMuted && styles.muteButtonActive,
-                  pressed && styles.muteButtonPressed,
+                  (pressed || isHoldActive) && styles.muteButtonPressed,
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel={isMuted ? "Hold to speak, release to mute" : "Microphone active, tap or release to mute"}
               >
                 <Feather name={isMuted ? "mic-off" : "mic"} size={20} color={isMuted ? theme.danger : theme.text} />
               </Pressable>

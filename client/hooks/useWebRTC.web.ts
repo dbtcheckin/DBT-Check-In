@@ -67,7 +67,10 @@ export function useWebRTC() {
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      setIsMuted(false);
+      stream.getTracks().forEach((track) => {
+        track.enabled = false;
+      });
+      setIsMuted(true);
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
@@ -292,15 +295,19 @@ export function useWebRTC() {
     return messagesRef.current;
   }, []);
 
-  const toggleMute = useCallback(() => {
+  const setMutedState = useCallback((muted: boolean) => {
     if (streamRef.current) {
       const audioTracks = streamRef.current.getAudioTracks();
       audioTracks.forEach((track) => {
-        track.enabled = !track.enabled;
+        track.enabled = !muted;
       });
-      setIsMuted((prev) => !prev);
     }
+    setIsMuted(muted);
   }, []);
+
+  const toggleMute = useCallback(() => {
+    setMutedState(!isMuted);
+  }, [isMuted, setMutedState]);
 
   return {
     connectRealtime,
@@ -310,6 +317,7 @@ export function useWebRTC() {
     getTranscript,
     getMessages,
     toggleMute,
+    setMutedState,
     isConnected,
     isMuted,
     connectionError,

@@ -113,7 +113,35 @@ export default function WeeklyRecordingScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const cardDataRef = useRef<WeeklyCardData>(createEmptyCardData());
 
-  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, toggleMute, isMuted } = useWebRTC();
+  const { connectRealtime, disconnect, getTranscript, getMessages, connectionError, isSupported, toggleMute, setMutedState, isMuted } = useWebRTC();
+
+  const [isHoldActive, setIsHoldActive] = useState(false);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const HOLD_THRESHOLD_MS = 150;
+
+  const handleMicPressIn = useCallback(() => {
+    holdTimeoutRef.current = setTimeout(() => {
+      setIsHoldActive(true);
+      setMutedState(false);
+    }, HOLD_THRESHOLD_MS);
+  }, [setMutedState]);
+
+  const handleMicPressOut = useCallback(() => {
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    if (isHoldActive) {
+      setMutedState(true);
+      setIsHoldActive(false);
+    }
+  }, [isHoldActive, setMutedState]);
+
+  const handleMicPress = useCallback(() => {
+    if (!isHoldActive) {
+      toggleMute();
+    }
+  }, [isHoldActive, toggleMute]);
 
   const pulseOpacity = useSharedValue(1);
 
@@ -451,12 +479,16 @@ export default function WeeklyRecordingScreen() {
           <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
             {isRecording ? (
               <Pressable
-                onPress={toggleMute}
+                onPressIn={handleMicPressIn}
+                onPressOut={handleMicPressOut}
+                onPress={handleMicPress}
                 style={({ pressed }) => [
                   styles.muteButton,
                   isMuted && styles.muteButtonActive,
-                  pressed && styles.muteButtonPressed,
+                  (pressed || isHoldActive) && styles.muteButtonPressed,
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel={isMuted ? "Hold to speak, release to mute" : "Microphone active, tap or release to mute"}
               >
                 <Feather name={isMuted ? "mic-off" : "mic"} size={20} color={isMuted ? theme.danger : theme.text} />
               </Pressable>
