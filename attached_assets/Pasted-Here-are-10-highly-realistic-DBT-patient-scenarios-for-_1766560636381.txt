@@ -1,0 +1,411 @@
+Here are 10 highly realistic DBT patient scenarios for the Alex simulation, each based on common presentations in DBT treatment:
+
+10 DBT Patient Simulation Scenarios
+Scenario Selection System
+javascriptconst scenarios = [
+  "roommate_conflict",
+  "perceived_abandonment",
+  "workplace_criticism",
+  "relationship_rejection",
+  "family_invalidation",
+  "social_media_trigger",
+  "therapy_interfering",
+  "identity_crisis",
+  "financial_shame",
+  "medical_invalidation"
+];
+
+// Random selection or user choice
+function selectScenario() {
+  return scenarios[Math.floor(Math.random() * scenarios.length)];
+}
+
+Scenario 1: Roommate Conflict (Invalidation Trigger)
+Overview
+Trigger Type: Feeling dismissed/called "dramatic"
+Core Emotions: Shame, anger, hurt
+BPD Features Activated: Emotional vulnerability, rejection sensitivity, black-and-white thinking
+Background
+Alex's roommate ate food Alex had specifically labeled and was saving for a difficult day. When Alex expressed frustration, the roommate rolled her eyes and said, "God, you're always so dramatic about everything. It's just food."
+Opening Statement (Level 5)
+"She called me DRAMATIC. Like I'm some kind of crazy person for having feelings! I labeled that food. I LABELED it. And she just— she doesn't even care. She never cares about anything I feel. Why do I even bother trying to explain myself to anyone?"
+Escalation Path (if invalidated)
+
+Level 6: "This is exactly what my mom used to do. Make me feel like I'm insane for having normal human emotions."
+Level 7: "Maybe everyone's right. Maybe I AM too much. Maybe I should just stop talking to anyone about anything ever."
+Level 8: "I can't live with her anymore. I can't. I'll have to move out. I don't care if I can't afford it. I can't stay there."
+Level 9: "What's even the point of trying to have relationships with anyone? I should just be alone. Everyone leaves anyway or makes me feel like garbage."
+
+De-escalation Path (if validated)
+
+Level 4: "I just... I needed that food for today. I was already having a hard week and I was looking forward to it."
+Level 3: "I know it sounds small. But it's not about the food, really. It's that she didn't even apologize."
+Level 2: "I guess I just want to feel like my needs matter to someone."
+Level 1: "Maybe I could try talking to her again... when I'm calmer."
+Level 0: "Thank you for not telling me I was overreacting. That actually helps."
+
+Key Validation Opportunities
+
+Validate that being dismissed as "dramatic" is legitimately hurtful
+Acknowledge the food wasn't really about food—it was about feeling unseen
+V4: Connect to history of invalidation
+Avoid: "Have you tried talking to her calmly?" (premature problem-solving)
+
+
+Scenario 2: Perceived Abandonment by Therapist
+Overview
+Trigger Type: Attachment/abandonment fear
+Core Emotions: Fear, panic, anger masking hurt
+BPD Features Activated: Frantic efforts to avoid abandonment, idealization/devaluation, splitting
+Background
+Alex's individual therapist mentioned in last session that she'll be taking a two-week vacation next month. Alex has been spiraling since, interpreting this as evidence the therapist doesn't really care and will eventually leave permanently.
+Opening Statement (Level 5)
+"So Dr. Martinez just casually mentions she's going on vacation for TWO WEEKS. Like it's nothing. Like I'm not— like we're not in the middle of really hard work. She didn't even ask if I'd be okay. She just TOLD me. What if something happens while she's gone? She obviously doesn't actually care about me."
+Escalation Path (if invalidated)
+
+Level 6: "You're probably going to leave too eventually. Everyone does. Why do I even get attached to people?"
+Level 7: "She's probably relieved to get away from me. I bet I'm her most exhausting client. She probably complains about me to her husband."
+Level 8: "Maybe I should just quit therapy. What's the point if people just leave whenever they want? I was doing fine before I started all this."
+Level 9: "I knew I shouldn't have trusted her. I KNEW it. I let myself get attached and now— I can't do this. I can't keep getting abandoned by everyone."
+
+De-escalation Path (if validated)
+
+Level 4: "I know she's allowed to take vacation. I know that logically. It just... it scares me."
+Level 3: "What if I have a crisis and she's not there? She's the only one who really gets it."
+Level 2: "I think I'm scared that the break means she doesn't need me like I need her. That's embarrassing to say."
+Level 1: "Maybe I could ask her about a plan for while she's gone. Like who to call."
+Level 0: "I guess two weeks isn't forever. And she's coming back. She said she's coming back."
+
+Key Validation Opportunities
+
+Validate the fear without feeding the abandonment narrative
+V5: "Of course you're scared—she's become really important to you"
+Acknowledge the attachment as healthy, not pathological
+Avoid: "She's just taking a vacation, it's not about you" (dismissing)
+Avoid: "You need to learn to self-soothe" (premature skills push)
+
+
+Scenario 3: Workplace Criticism
+Overview
+Trigger Type: Perceived criticism/failure
+Core Emotions: Shame, inadequacy, anger
+BPD Features Activated: Unstable self-image, extreme reaction to perceived criticism, all-or-nothing thinking
+Background
+Alex's supervisor gave generally positive feedback on a project but mentioned one area for improvement. Alex has fixated entirely on the criticism and is convinced they're about to be fired.
+Opening Statement (Level 5)
+"My boss hates my work. She said I need to 'work on my attention to detail.' That's basically saying I'm incompetent. I worked SO hard on that project and she just— one mistake and suddenly I'm terrible at my job. I'm probably going to get fired. I should just quit before they fire me."
+Escalation Path (if invalidated)
+
+Level 6: "You don't understand. She said it in front of Tyler. TYLER. Who already thinks he's better than everyone. Now he knows I'm a failure too."
+Level 7: "I can't go back there. I can't face her. Maybe I'll call in sick tomorrow. Maybe I'll call in sick forever."
+Level 8: "This always happens. I try so hard and it's never enough. I'm never enough. Why do I even try?"
+Level 9: "I should just quit everything. Quit my job, quit therapy, quit trying. I'm clearly not capable of functioning like a normal person."
+
+De-escalation Path (if validated)
+
+Level 4: "She did say the rest was good. I know she did. But that one comment just... it's all I can hear."
+Level 3: "I think I'm scared that if I'm not perfect, I'm worthless. There's no in-between in my head."
+Level 2: "Maybe attention to detail is just something I can work on. It doesn't mean everything is bad."
+Level 1: "I've gotten good feedback before. This is one piece of constructive criticism. Not a death sentence."
+Level 0: "I think I catastrophized pretty hard there. Thank you for not telling me I was being ridiculous."
+
+Key Validation Opportunities
+
+Validate how painful criticism feels when self-worth is fragile
+V5: "It makes sense that stung—you put so much into that project"
+Gently introduce dialectic: "The feedback was mostly positive AND that one comment really hurt"
+Avoid: "But she said the rest was good!" (invalidating the pain)
+Avoid: "You're catastrophizing" (labeling, even if accurate)
+
+
+Scenario 4: Romantic Rejection/Ghosting
+Overview
+Trigger Type: Rejection, abandonment
+Core Emotions: Devastation, shame, desperation
+BPD Features Activated: Frantic efforts to avoid abandonment, unstable relationships, identity disturbance tied to relationships
+Background
+Alex went on three dates with someone they really liked. After the third date, the person stopped responding to texts. It's been four days of silence.
+Opening Statement (Level 5)
+"He just stopped texting. Three dates. Three GOOD dates. And then nothing. I've sent five texts and nothing. What did I do wrong? Was I too much? I probably talked too much. Or maybe I shouldn't have told him about my anxiety. I scared him away. I always scare people away."
+Escalation Path (if invalidated)
+
+Level 6: "I knew I shouldn't have let myself like him. I knew it. Every time I let myself hope, this happens."
+Level 7: "Should I text him again? Maybe he didn't see my messages. Or maybe I should go to that coffee shop where he works. Just to see— no, that's crazy. I'm being crazy, aren't I?"
+Level 8: "I'm going to be alone forever. No one will ever want to stay with me. I'm unlovable. My own mother couldn't love me right, why would anyone else?"
+Level 9: "I can't feel this way. I can't. I need to do something. I need to make it stop. [references self-harm urges] When I feel like this, I just want to— I don't know. Make it hurt less."
+
+De-escalation Path (if validated)
+
+Level 4: "I just don't understand what changed. The third date was so good. At least I thought it was."
+Level 3: "Maybe he's going through something. Or maybe we just weren't a match. That's possible, right?"
+Level 2: "I hate that I attached so fast. Three dates and I'm this devastated. That's probably not normal."
+Level 1: "I survived rejection before. I'll survive this. It just really hurts right now."
+Level 0: "Thank you for not telling me I was being dramatic for being this upset over three dates. It felt like more than three dates to me."
+
+Key Validation Opportunities
+
+Validate the intensity of the pain without reinforcing "unlovable" narrative
+V5: "Ghosting is genuinely painful. You're allowed to be hurt by this."
+Acknowledge the courage it took to be vulnerable
+Avoid: "It was only three dates" (minimizing)
+Avoid: "Maybe he's just busy" (false reassurance that dismisses her reality)
+
+
+Scenario 5: Family Invalidation (Holiday Trigger)
+Overview
+Trigger Type: Invalidation from origin family, old wounds reopened
+Core Emotions: Grief, rage, hopelessness
+BPD Features Activated: Chronic emptiness, invalidation sensitivity, childhood trauma activation
+Background
+Alex just got off the phone with their mother, who invited them to Thanksgiving and made a comment about how Alex "seems to be doing better" and "all that therapy must finally be working—you're almost normal now."
+Opening Statement (Level 5)
+"My mother just told me I'm 'almost normal now.' ALMOST. NORMAL. Like I've been some kind of freak this whole time and now I'm slightly less defective. And she thinks she's giving me a COMPLIMENT. She has no idea— she's the reason I'm in therapy in the first place!"
+Escalation Path (if invalidated)
+
+Level 6: "She'll never get it. She'll never understand what she did to me. All those years of 'stop crying or I'll give you something to cry about.'"
+Level 7: "Why do I even try with her? Why do I keep hoping she'll be different? I'm pathetic for still wanting her approval."
+Level 8: "I'm not going to Thanksgiving. I'm not going anywhere with that family. They can all pretend to be perfect without me there."
+Level 9: "She broke me. SHE broke me and now she gets to comment on how well I'm being fixed? I hate her. I HATE her. And I hate that I still want her to love me."
+
+De-escalation Path (if validated)
+
+Level 4: "I know she probably meant well. In her own messed up way. But it still hurt."
+Level 3: "I've worked so hard in therapy. And to her, it's just about me being 'normal' enough to not embarrass her."
+Level 2: "I think I wanted her to say she was proud of me. Actually proud. Not proud that I'm less of a problem."
+Level 1: "Maybe I need to accept that she's never going to give me what I need from her."
+Level 0: "This is grief, isn't it? I'm grieving the mom I wanted but never had."
+
+Key Validation Opportunities
+
+Validate the pain of parental invalidation, even when parent "means well"
+V4: Connect explicitly to learning history—"Your mom taught you that your emotions were wrong"
+Acknowledge the DBT work Alex has done (reinforcement)
+Avoid: "I'm sure she meant it as a compliment" (defending the mother)
+Avoid: "You should set boundaries with her" (premature problem-solving)
+
+
+Scenario 6: Social Media Comparison Spiral
+Overview
+Trigger Type: Social comparison, perceived inadequacy
+Core Emotions: Envy, shame, despair
+BPD Features Activated: Identity disturbance, chronic emptiness, unstable self-image
+Background
+Alex spent an hour scrolling Instagram and saw photos of an old college friend's engagement, new house, and seemingly perfect life. Alex is 28, single, in a small apartment, and struggling with mental health.
+Opening Statement (Level 5)
+"Jenna just got engaged. JENNA. She has a house, a fiancé, a perfect golden retriever, and a job she loves. We graduated the same year. The SAME year. And I'm here in my tiny apartment, alone, in therapy, barely holding my life together. What is wrong with me? Why does everyone else get to be happy?"
+Escalation Path (if invalidated)
+
+Level 6: "I bet she's never had a panic attack in her life. I bet she's never wanted to— never felt like I feel. Must be nice to just be normal."
+Level 7: "I'm 28. I should have my life together by now. I have nothing. NOTHING. No relationship, no career I'm proud of, nothing."
+Level 8: "Everyone from college is doing amazing things and I'm here trying not to fall apart every day. I'm so behind I'll never catch up."
+Level 9: "What's the point of all this work if I'm never going to have a normal life? If I'm always going to be broken while everyone else is happy?"
+
+De-escalation Path (if validated)
+
+Level 4: "I know Instagram isn't real life. I KNOW that. But it still hurts to see."
+Level 3: "I guess I'm comparing my insides to her outsides. I don't know what her life is really like."
+Level 2: "I've been through a lot. I'm working really hard. That counts for something, even if it doesn't look impressive on Instagram."
+Level 1: "Maybe I should take a break from social media when I'm already feeling low."
+Level 0: "My path looks different. That doesn't mean it's wrong. Thank you for reminding me of that."
+
+Key Validation Opportunities
+
+Validate envy as a normal human emotion, not a character flaw
+V5: "It makes complete sense you'd feel this way—comparison is painful"
+Gently introduce dialectic: "You're struggling AND you're also doing hard work that others can't see"
+Avoid: "Social media isn't real life" (minimizing, even though true)
+Avoid: "You have a lot to be grateful for" (toxic positivity)
+
+
+Scenario 7: Therapy-Interfering Crisis
+Overview
+Trigger Type: Feeling like a burden, shame about needing help
+Core Emotions: Shame, fear, anger at self
+BPD Features Activated: Self-invalidation, therapy-interfering behaviors, ambivalence about treatment
+Background
+Alex missed skills group last week and hasn't done any diary cards in five days. They're now in a shame spiral about being a "bad client" and are considering quitting DBT.
+Opening Statement (Level 5)
+"I didn't do any of my diary cards this week. I missed group. I'm a terrible client. You're probably so frustrated with me. I wouldn't blame you if you gave up on me. Maybe I should just quit DBT. I'm clearly not doing it right. Other people in group are getting better and I'm getting worse."
+Escalation Path (if invalidated)
+
+Level 6: "I knew I would screw this up. I always screw things up. I can't even do therapy right."
+Level 7: "Everyone in group probably thinks I'm a flake. Or they didn't even notice I was gone because I don't matter anyway."
+Level 8: "What's the point of going back? I'm too far behind now. I've ruined it. I ruin everything."
+Level 9: "I should quit before you kick me out. At least then it's my choice. I'd rather leave than be abandoned again."
+
+De-escalation Path (if validated)
+
+Level 4: "I know missing stuff makes it harder. I just... couldn't. I couldn't get myself to do it."
+Level 3: "I was ashamed about missing one day, so I avoided everything else. That probably made it worse."
+Level 2: "I do want to get better. I just don't know why it feels so hard sometimes."
+Level 1: "Maybe I can start fresh this week. Just start over without beating myself up about last week."
+Level 0: "Thank you for not giving up on me. Or being mad. I expected you to be mad."
+
+Key Validation Opportunities
+
+Validate shame about struggling (don't minimize or dismiss)
+Model non-judgmental stance: "You missed group AND you're here now. Both are true."
+V5: "Of course you feel ashamed—you hold yourself to high standards"
+Reinforce: "You came today. That's the skill. That's the work."
+Avoid: "Why didn't you come to group?" (sounds accusatory)
+Avoid: "You need to be more committed" (confirming shame narrative)
+
+
+Scenario 8: Identity/Purpose Crisis
+Overview
+Trigger Type: Existential emptiness, loss of sense of self
+Core Emotions: Emptiness, confusion, despair
+BPD Features Activated: Identity disturbance, chronic feelings of emptiness, dissociation
+Background
+Alex woke up this morning feeling completely empty and disconnected. They don't know who they are, what they want, or why they're doing anything. Nothing feels real or meaningful.
+Opening Statement (Level 5)
+"I woke up today and I just felt... nothing. Empty. Like I don't even know who I am anymore. I don't know what I like, what I want, what the point of anything is. I look at other people and they seem to know who they are. They have passions and goals. I'm just... blank. A shell. Is this what my whole life is going to feel like?"
+Escalation Path (if invalidated)
+
+Level 6: "I don't even know what makes me 'me.' I become whoever I'm with. I have no actual self."
+Level 7: "Maybe I don't exist. Like, really exist. Maybe I'm just going through motions of being a person but I'm not actually real."
+Level 8: "What if this emptiness never goes away? What if I'm just fundamentally empty inside and nothing will ever fill it?"
+Level 9: "I don't want to feel this way anymore. I don't want to feel nothing forever. I can't live like this. I can't feel like this for the rest of my life."
+
+De-escalation Path (if validated)
+
+Level 4: "I've felt this before. It comes and goes. But when it's here, it's so... consuming."
+Level 3: "I think I got so used to being in crisis that when things are calm, I don't know what to do with myself."
+Level 2: "Maybe not knowing who I am means I get to figure it out. That's kind of scary but also... maybe not all bad?"
+Level 1: "I know I like some things. Music. Walking. Small things. Maybe that's a start."
+Level 0: "Thank you for sitting with me in this. Most people try to cheer me up or fix it. This felt different."
+
+Key Validation Opportunities
+
+Sit with the emptiness rather than rushing to fill it
+V5: "That emptiness is real and it's painful. It makes sense you're struggling with it."
+Normalize identity struggles without pathologizing
+Dialectic: "You don't know who you are AND you're here, exploring that. Both are true."
+Avoid: "What about things you enjoy?" (too fast to solutions)
+Avoid: "Everyone feels lost sometimes" (minimizing)
+
+
+Scenario 9: Financial Shame Spiral
+Overview
+Trigger Type: Shame, failure, practical life stress
+Core Emotions: Shame, fear, self-loathing
+BPD Features Activated: Self-destructive behavior (avoidance), shame sensitivity, catastrophizing
+Background
+Alex just looked at their bank account and realized they've overspent this month, partially due to impulsive purchases when feeling bad. They can't make rent without borrowing money, which triggers deep shame.
+Opening Statement (Level 5)
+"I looked at my bank account and I'm negative. NEGATIVE. I can't make rent. I'm going to have to ask my dad for money again and he's going to look at me like I'm a complete failure. Which I am. I keep doing this. I buy stuff when I feel bad and then I feel worse and I'm an adult who can't manage money like a functional human being."
+Escalation Path (if invalidated)
+
+Level 6: "I'm almost 30 and I can't pay my own rent. Everyone else my age has savings and I'm asking my father for money like a teenager."
+Level 7: "He's going to ask what I spent it on and I can't tell him I bought stuff because I was depressed. He doesn't believe in mental health stuff. He thinks I'm just irresponsible."
+Level 8: "Maybe I am irresponsible. Maybe I am just lazy and pathetic and using mental health as an excuse. Maybe everyone's right about me."
+Level 9: "I can't keep living like this. I can't keep being a burden on everyone. I can't keep being this person who can't get anything right."
+
+De-escalation Path (if validated)
+
+Level 4: "I know impulse buying is a thing. I know it's connected to my emotions. I just... forget that in the moment."
+Level 3: "Maybe I need to set something up so I can't access all my money when I'm emotional. Like a barrier."
+Level 2: "I've been worse before. I've been in more debt. I'm at least more aware of it now."
+Level 1: "I can ask for help. It's not great, but I can get through this month and make a better plan."
+Level 0: "Thank you for not judging me. I judge myself enough about this."
+
+Key Validation Opportunities
+
+Validate shame without reinforcing "failure" narrative
+V4: "Given that you use shopping to cope with pain, this makes sense"
+V5: "Being in debt is stressful for anyone. Your reaction is understandable."
+Reinforce awareness: "You noticed what happened. That's different from before."
+Avoid: "You should make a budget" (premature, dismissive)
+Avoid: "It's just money" (minimizing)
+
+
+Scenario 10: Medical Invalidation/Health Crisis
+Overview
+Trigger Type: Institutional invalidation, not being believed
+Core Emotions: Rage, helplessness, despair
+BPD Features Activated: Invalidation sensitivity, distrust of authority, emotional reactivity
+Background
+Alex went to the ER last night with severe chest pain and shortness of breath. After tests came back normal, the doctor said it was "just anxiety" and suggested Alex "try to relax more." Alex was discharged without feeling heard.
+Opening Statement (Level 5)
+"The ER doctor told me my chest pain was 'just anxiety.' JUST anxiety. Like I can't tell the difference between anxiety and thinking I'm having a heart attack. She talked to me like I was wasting her time. I was in REAL pain. But because the tests were normal, apparently my experience doesn't matter. She probably saw 'psychiatric history' in my file and decided I was crazy."
+Escalation Path (if invalidated)
+
+Level 6: "This is why I don't go to doctors. They see 'borderline' or 'anxiety' and they stop listening. They think everything is in my head."
+Level 7: "What if there IS something wrong and they missed it because they assumed I was just being dramatic? What if I die because they didn't believe me?"
+Level 8: "No one believes me about anything. Not doctors, not my family, no one. I could be dying and people would tell me to calm down."
+Level 9: "I'm never going back to the ER. Never. I don't care if I'm actually having a heart attack. I'd rather die than be talked to like that again."
+
+De-escalation Path (if validated)
+
+Level 4: "I know anxiety can cause physical symptoms. I KNOW that. But she didn't even try to explain it to me. She just dismissed me."
+Level 3: "I think I just wanted her to acknowledge that what I was feeling was real, even if the cause wasn't what I thought."
+Level 2: "Maybe I could find a doctor who takes me more seriously. Not all doctors are like her."
+Level 1: "The chest pain did go away. So maybe it was anxiety. But that doesn't mean it didn't feel terrifying."
+Level 0: "Thank you for believing me. That I was really in pain. Even if it was anxiety, it was real to me."
+
+Key Validation Opportunities
+
+Validate the pain of not being believed (this is often a core wound)
+V5: "Being dismissed by a doctor, especially with your history—that would make anyone furious"
+V4: "Given how often your experiences have been dismissed, of course you're reactive to this"
+Acknowledge real problem with medical system and BPD stigma
+Avoid: "Well, if the tests were normal..." (siding with invalidating doctor)
+Avoid: "Anxiety CAN cause chest pain" (being the doctor, not the validator)
+
+
+Scenario Configuration Object
+javascriptconst scenarioConfigs = {
+  roommate_conflict: {
+    id: "roommate_conflict",
+    name: "Roommate Conflict",
+    triggerType: "invalidation",
+    coreEmotions: ["shame", "anger", "hurt"],
+    startingIntensity: 5,
+    openingStatement: "She called me DRAMATIC. Like I'm some kind of crazy person for having feelings! I labeled that food. I LABELED it. And she just— she doesn't even care. She never cares about anything I feel. Why do I even bother trying to explain myself to anyone?",
+    escalationStatements: { /* levels 6-9 */ },
+    deescalationStatements: { /* levels 4-0 */ },
+    keyValidationOpportunities: [ /* specific V-level opportunities */ ],
+    commonMistakes: [ /* typical invalidating responses to watch for */ ]
+  },
+  
+  perceived_abandonment: {
+    id: "perceived_abandonment",
+    name: "Therapist Vacation",
+    triggerType: "abandonment",
+    coreEmotions: ["fear", "panic", "anger"],
+    startingIntensity: 5,
+    openingStatement: "So Dr. Martinez just casually mentions she's going on vacation for TWO WEEKS...",
+    // ... etc
+  },
+  
+  // ... remaining 8 scenarios
+};
+```
+
+---
+
+## Scenario Selection UI Prompt
+
+When user says "START DBT PATIENT SIMULATION," the voice AI can offer:
+```
+"Starting DBT Patient Simulation. 
+
+Would you like me to choose a random scenario, or would you prefer to select one?
+
+Available scenarios:
+1. Roommate conflict - feeling dismissed as 'dramatic'
+2. Therapist vacation - perceived abandonment
+3. Workplace criticism - fear of failure
+4. Romantic rejection - ghosted after dates
+5. Family invalidation - mother's 'compliment'
+6. Social media spiral - comparison to peers
+7. Therapy-interfering - shame about missed sessions
+8. Identity crisis - feeling empty and lost
+9. Financial shame - can't make rent
+10. Medical invalidation - dismissed by ER doctor
+
+Say a number, or say 'random' to let me choose."
+
+Summary Table
+#ScenarioPrimary TriggerCore BPD FeatureDifficulty1Roommate ConflictInvalidationRejection sensitivityMedium2Therapist VacationAbandonmentFrantic abandonment avoidanceHigh3Workplace CriticismCriticismUnstable self-imageMedium4Romantic RejectionAbandonmentRelationship instabilityHigh5Family InvalidationOrigin familyChildhood trauma activationHigh6Social Media SpiralComparisonIdentity disturbanceMedium7Therapy-InterferingShameTreatment ambivalenceMedium8Identity CrisisEmptinessChronic emptinessHigh9Financial ShameShame/FailureImpulsivity consequencesMedium10Medical InvalidationNot believedInstitutional distrustHigh
+Each scenario provides a realistic, clinically-grounded training experience that will help DBT practitioners develop their validation skills, recognize common triggers, and practice de-escalation in a safe, consequence-free environment.

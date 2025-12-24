@@ -2,12 +2,14 @@ import { useState, useCallback, useRef } from "react";
 import {
   SimulationState,
   SimulationTurn,
+  ScenarioConfig,
   createInitialSimulationState,
   checkForSimulationEntry,
   checkForSimulationExit,
   processUserInput,
   getInstructionsForIntensity,
-  SIMULATION_START_DISCLAIMER,
+  selectRandomScenario,
+  generateStartDisclaimer,
   DEBRIEF_INSTRUCTIONS,
   generateDebriefSummary,
 } from "@/lib/simulation";
@@ -47,6 +49,7 @@ export function useSimulation() {
   }, []);
 
   const startSimulation = useCallback(() => {
+    const scenario = selectRandomScenario();
     const newState: SimulationState = {
       active: true,
       mode: "simulation",
@@ -57,6 +60,7 @@ export function useSimulation() {
       outcome: null,
       validatingMoves: [],
       invalidatingMoves: [],
+      scenario,
     };
     stateRef.current = newState;
     setSimulationState(newState);
@@ -96,10 +100,11 @@ export function useSimulation() {
     
     if (!currentState.active && currentState.mode !== "simulation") {
       if (isUserSpeaker && checkForSimulationEntry(userMessage)) {
+        const newState = startSimulation();
         return { 
           enteredSimulation: true, 
-          state: startSimulation(),
-          sessionUpdate: getSimulationSessionUpdate(5),
+          state: newState,
+          sessionUpdate: getSimulationSessionUpdate(5, newState.scenario),
         };
       }
       return { enteredSimulation: false, state: currentState };
@@ -177,7 +182,7 @@ export function useSimulation() {
       return {
         state: newState,
         sessionUpdate: intensityChanged 
-          ? getSimulationSessionUpdate(result.newIntensity)
+          ? getSimulationSessionUpdate(result.newIntensity, newState.scenario)
           : undefined,
       };
     }
@@ -185,7 +190,8 @@ export function useSimulation() {
     return { state: currentState };
   }, [startSimulation, endSimulation, emitEvent]);
 
-  const getSimulationSessionUpdate = useCallback((intensity: number) => {
+  const getSimulationSessionUpdate = useCallback((intensity: number, scenario?: ScenarioConfig | null) => {
+    const activeScenario = scenario || stateRef.current.scenario;
     const simulationInstructions = `
 IMPORTANT: You are now in DBT PATIENT SIMULATION MODE. You are NO LONGER a diary card assistant.
 
@@ -193,7 +199,7 @@ DO NOT ask about urges, emotions, or diary card data. DO NOT act as a helper or 
 
 Instead, you ARE Alex - a 28-year-old patient with BPD characteristics who needs support.
 
-${getInstructionsForIntensity(intensity)}
+${getInstructionsForIntensity(intensity, activeScenario)}
 `;
     return {
       type: "session.update",
@@ -215,7 +221,10 @@ ${getInstructionsForIntensity(intensity)}
     };
   }, []);
 
-  const getStartDisclaimer = useCallback(() => SIMULATION_START_DISCLAIMER, []);
+  const getStartDisclaimer = useCallback(() => {
+    const scenario = stateRef.current.scenario;
+    return scenario ? generateStartDisclaimer(scenario) : generateStartDisclaimer(selectRandomScenario());
+  }, []);
 
   const isSimulationActive = useCallback(() => {
     return stateRef.current.active && stateRef.current.mode === "simulation";
