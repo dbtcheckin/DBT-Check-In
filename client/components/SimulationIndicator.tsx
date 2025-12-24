@@ -78,7 +78,7 @@ export function SimulationIndicator({ state, compact = false }: SimulationIndica
 
   return (
     <Animated.View style={[styles.container, pulseStyle]}>
-      <View style={[styles.badge, { backgroundColor: theme.backgroundElevated }]}>
+      <View style={[styles.badge, { backgroundColor: theme.backgroundSecondary }]}>
         <View style={styles.header}>
           <Feather name="activity" size={14} color={intensityColor} />
           <ThemedText style={[styles.title, { color: intensityColor }]}>

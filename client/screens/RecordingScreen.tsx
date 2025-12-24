@@ -745,10 +745,6 @@ export default function RecordingScreen() {
             ]}
             showsVerticalScrollIndicator={true}
           >
-            {simulationState?.active || simulationState?.mode === "debrief" ? (
-              <SimulationIndicator state={simulationState} />
-            ) : null}
-            
             <View style={styles.cardContainer}>
               <LiveDiaryCard
                 data={cardData}
@@ -762,6 +758,10 @@ export default function RecordingScreen() {
                 onDeleteCustomBehavior={handleDeleteCustomBehavior}
               />
             </View>
+
+            {simulationState?.active && simulationState?.mode === "simulation" ? (
+              <SimulationIndicator state={simulationState} />
+            ) : null}
 
             <View style={styles.transcriptSection}>
               <ScrollView
