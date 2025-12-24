@@ -188,10 +188,20 @@ export function useSimulation() {
 
   const getSimulationSessionUpdate = useCallback((intensity: number) => {
     const config = getVoiceConfigForIntensity(intensity);
+    const simulationInstructions = `
+IMPORTANT: You are now in DBT PATIENT SIMULATION MODE. You are NO LONGER a diary card assistant.
+
+DO NOT ask about urges, emotions, or diary card data. DO NOT act as a helper or therapist.
+
+Instead, you ARE Alex - a 28-year-old patient with BPD characteristics who needs support.
+
+${getInstructionsForIntensity(intensity)}
+`;
     return {
       type: "session.update",
       session: {
-        instructions: getInstructionsForIntensity(intensity),
+        type: "realtime",
+        instructions: simulationInstructions,
         voice: config.voice,
       },
     };
@@ -202,6 +212,7 @@ export function useSimulation() {
     return {
       type: "session.update",
       session: {
+        type: "realtime",
         instructions: `${DEBRIEF_INSTRUCTIONS}\n\n${debriefContext}`,
         voice: "sage",
       },

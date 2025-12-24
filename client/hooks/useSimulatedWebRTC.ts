@@ -18,7 +18,8 @@ export function useSimulatedWebRTC() {
       webRTC.sendEvent({
         type: "session.update",
         session: {
-          instructions: "Return to normal DBT diary card assistant mode. Resume your helpful, conversational approach to collecting diary card data.",
+          type: "realtime",
+          instructions: "You are now back in DBT diary card assistant mode. Resume your helpful, conversational approach to collecting diary card data. Ask about urges, emotions, actions, substances, and skills as normal.",
           voice: "marin",
         },
       });
