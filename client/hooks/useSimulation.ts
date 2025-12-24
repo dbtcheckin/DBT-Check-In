@@ -6,7 +6,6 @@ import {
   checkForSimulationEntry,
   checkForSimulationExit,
   processUserInput,
-  getVoiceConfigForIntensity,
   getInstructionsForIntensity,
   SIMULATION_START_DISCLAIMER,
   DEBRIEF_INSTRUCTIONS,
@@ -187,7 +186,6 @@ export function useSimulation() {
   }, [startSimulation, endSimulation, emitEvent]);
 
   const getSimulationSessionUpdate = useCallback((intensity: number) => {
-    const config = getVoiceConfigForIntensity(intensity);
     const simulationInstructions = `
 IMPORTANT: You are now in DBT PATIENT SIMULATION MODE. You are NO LONGER a diary card assistant.
 
@@ -202,7 +200,6 @@ ${getInstructionsForIntensity(intensity)}
       session: {
         type: "realtime",
         instructions: simulationInstructions,
-        voice: config.voice,
       },
     };
   }, []);
@@ -214,7 +211,6 @@ ${getInstructionsForIntensity(intensity)}
       session: {
         type: "realtime",
         instructions: `${DEBRIEF_INSTRUCTIONS}\n\n${debriefContext}`,
-        voice: "sage",
       },
     };
   }, []);

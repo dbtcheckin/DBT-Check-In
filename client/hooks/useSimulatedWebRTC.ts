@@ -20,7 +20,6 @@ export function useSimulatedWebRTC() {
         session: {
           type: "realtime",
           instructions: "You are now back in DBT diary card assistant mode. Resume your helpful, conversational approach to collecting diary card data. Ask about urges, emotions, actions, substances, and skills as normal.",
-          voice: "marin",
         },
       });
     }
