@@ -12,6 +12,8 @@ export function useSimulatedWebRTC() {
   const webRTC = useWebRTC();
   const simulation = useSimulation();
   const simulationStateCallbackRef = useRef<SimulationStateCallback | null>(null);
+  const lastProcessedTextRef = useRef<string>("");
+  const lastProcessedMessageIdRef = useRef<string>("");
 
   const handleSimulationEvent = useCallback((event: SimulationEvent) => {
     if (event.type === "simulation_ended") {
@@ -58,7 +60,29 @@ export function useSimulatedWebRTC() {
       const lastMessage = messages[messages.length - 1];
       
       if (lastMessage?.isFinal && lastMessage.speaker === "user") {
-        const result = simulation.processMessage(lastMessage.text, true);
+        const fullText = lastMessage.text;
+        let textToProcess = fullText;
+        
+        if (lastMessage.id === lastProcessedMessageIdRef.current) {
+          const previouslyProcessed = lastProcessedTextRef.current;
+          if (fullText.startsWith(previouslyProcessed)) {
+            textToProcess = fullText.slice(previouslyProcessed.length).trim();
+          }
+        } else {
+          lastProcessedMessageIdRef.current = lastMessage.id;
+          lastProcessedTextRef.current = "";
+        }
+        
+        lastProcessedTextRef.current = fullText;
+        
+        if (!textToProcess) {
+          if (onMessage) {
+            onMessage(messages);
+          }
+          return;
+        }
+        
+        const result = simulation.processMessage(textToProcess, true);
         
         if (result.enteredSimulation) {
           webRTC.cancelResponse();
@@ -114,11 +138,15 @@ export function useSimulatedWebRTC() {
     };
 
     simulation.resetSimulation();
+    lastProcessedTextRef.current = "";
+    lastProcessedMessageIdRef.current = "";
     return webRTC.connectRealtime(onTranscript, onConnectionState, wrappedMessageCallback);
   }, [webRTC.connectRealtime, webRTC.sendEvent, webRTC.cancelResponse, simulation]);
 
   const disconnectWithSimulation = useCallback(() => {
     simulation.resetSimulation();
+    lastProcessedTextRef.current = "";
+    lastProcessedMessageIdRef.current = "";
     webRTC.disconnect();
   }, [webRTC.disconnect, simulation.resetSimulation]);
 
