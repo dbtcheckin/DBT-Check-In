@@ -746,6 +746,18 @@ export default function RecordingScreen() {
         <Pressable onPress={handleCancel} style={styles.cancelButton}>
           <ThemedText style={styles.cancelText}>Cancel</ThemedText>
         </Pressable>
+        {isRecording || connectionState === "connecting" ? (
+          <Pressable
+            style={[styles.headerDoneButton, { backgroundColor: theme.accent }]}
+            onPress={stopRecording}
+          >
+            <ThemedText style={[styles.headerDoneText, { color: theme.backgroundRoot }]}>
+              Done
+            </ThemedText>
+          </Pressable>
+        ) : (
+          <View style={styles.headerDonePlaceholder} />
+        )}
         <View style={styles.timerContainer}>
           {isRecording ? (
             <Animated.View style={[styles.recordingDot, pulseStyle]} />
@@ -794,118 +806,102 @@ export default function RecordingScreen() {
               <SimulationIndicator state={simulationState} />
             ) : null}
 
-            <View style={styles.transcriptSection}>
-              {messages.length > 0 ? (
-                <ScrollView
-                  ref={scrollViewRef}
-                  style={styles.transcriptScroll}
-                  contentContainerStyle={styles.transcriptScrollContent}
-                  nestedScrollEnabled={true}
-                  onContentSizeChange={() =>
-                    scrollViewRef.current?.scrollToEnd({ animated: true })
-                  }
-                >
-                  {messages.map((message) => (
-                    <View key={message.id} style={styles.messageContainer}>
-                      <View style={[
-                        styles.speakerBadge,
-                        message.speaker === "user" ? styles.userBadge : styles.aiBadge
-                      ]}>
-                        <Feather 
-                          name={message.speaker === "user" ? "user" : "cpu"} 
-                          size={10} 
-                          color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
-                        />
-                        <ThemedText style={[
-                          styles.speakerLabel,
-                          message.speaker === "user" ? styles.userLabel : styles.aiLabel
-                        ]}>
-                          {message.speaker === "user" ? "You" : "AI"}
-                        </ThemedText>
-                      </View>
-                      <ThemedText
-                        style={[
-                          styles.messageText,
-                          !message.isFinal && styles.messageStreaming,
-                        ]}
-                        fontFamily="serif"
-                      >
-                        {message.text}
-                        {!message.isFinal && isRecording ? (
-                          <ThemedText style={styles.cursor}>|</ThemedText>
-                        ) : null}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </ScrollView>
-              ) : null}
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[styles.textInputField, { color: theme.text }]}
-                  value={textInput}
-                  onChangeText={setTextInput}
-                  placeholder="Speak or type about your day..."
-                  placeholderTextColor={theme.textTertiary}
-                  multiline
-                  blurOnSubmit={false}
-                />
-                {textInput.trim() ? (
-                  <Pressable
-                    style={[styles.sendButton, { backgroundColor: theme.accent }]}
-                    onPress={() => {
-                      if (textInput.trim()) {
-                        const newMessage: ConversationMessage = {
-                          id: Date.now().toString(),
-                          text: textInput.trim(),
-                          speaker: "user",
-                          isFinal: true,
-                          timestamp: Date.now(),
-                        };
-                        setMessages(prev => [...prev, newMessage]);
-                        setTranscript(prev => prev + (prev ? " " : "") + textInput.trim());
-                        setTextInput("");
-                      }
-                    }}
-                  >
-                    <Feather name="send" size={16} color={theme.backgroundRoot} />
-                  </Pressable>
-                ) : null}
-                <RecordingOrb
-                  state={
-                    connectionState === "connecting" ? "connecting" :
-                    isRecording && isMuted ? "recording-muted" :
-                    isRecording ? "recording-unmuted" : "idle"
-                  }
-                  isMuted={isMuted}
-                  isHoldActive={isHoldActive}
-                  recordingTime={recordingTime}
-                  onPress={handleMicPress}
-                  onPressIn={handleMicPressIn}
-                  onPressOut={handleMicPressOut}
-                  onStartRecording={startRecording}
-                  size="compact"
-                  showLabels={false}
-                />
-              </View>
-            </View>
           </ScrollView>
 
-          {isRecording || connectionState === "connecting" ? (
-            <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
-              <Pressable
-                style={[styles.actionButton, { backgroundColor: theme.accent }]}
-                onPress={stopRecording}
+          <View style={[styles.transcriptSection, { paddingBottom: insets.bottom + Spacing.sm }]}>
+            {messages.length > 0 ? (
+              <ScrollView
+                ref={scrollViewRef}
+                style={styles.transcriptScroll}
+                contentContainerStyle={styles.transcriptScrollContent}
+                onContentSizeChange={() =>
+                  scrollViewRef.current?.scrollToEnd({ animated: true })
+                }
               >
-                <View style={styles.actionButtonContent}>
-                  <View style={[styles.doneIndicatorGreen, { backgroundColor: theme.success }]} />
-                  <View style={[styles.doneIndicatorYellow, { backgroundColor: theme.warning }]} />
-                  <ThemedText style={[styles.actionButtonText, { color: theme.backgroundRoot }]}>
-                    Done
-                  </ThemedText>
-                </View>
-              </Pressable>
+                {messages.map((message) => (
+                  <View key={message.id} style={styles.messageContainer}>
+                    <View style={[
+                      styles.speakerBadge,
+                      message.speaker === "user" ? styles.userBadge : styles.aiBadge
+                    ]}>
+                      <Feather 
+                        name={message.speaker === "user" ? "user" : "cpu"} 
+                        size={10} 
+                        color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
+                      />
+                      <ThemedText style={[
+                        styles.speakerLabel,
+                        message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                      ]}>
+                        {message.speaker === "user" ? "You" : "AI"}
+                      </ThemedText>
+                    </View>
+                    <ThemedText
+                      style={[
+                        styles.messageText,
+                        !message.isFinal && styles.messageStreaming,
+                      ]}
+                      fontFamily="serif"
+                    >
+                      {message.text}
+                      {!message.isFinal && isRecording ? (
+                        <ThemedText style={styles.cursor}>|</ThemedText>
+                      ) : null}
+                    </ThemedText>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.textInputField, { color: theme.text }]}
+                value={textInput}
+                onChangeText={setTextInput}
+                placeholder="Speak or type about your day..."
+                placeholderTextColor={theme.textTertiary}
+                multiline
+                blurOnSubmit={false}
+              />
+              {textInput.trim() ? (
+                <Pressable
+                  style={[styles.sendButton, { backgroundColor: theme.accent }]}
+                  onPress={() => {
+                    if (textInput.trim()) {
+                      const newMessage: ConversationMessage = {
+                        id: Date.now().toString(),
+                        text: textInput.trim(),
+                        speaker: "user",
+                        isFinal: true,
+                        timestamp: Date.now(),
+                      };
+                      setMessages(prev => [...prev, newMessage]);
+                      setTranscript(prev => prev + (prev ? " " : "") + textInput.trim());
+                      setTextInput("");
+                    }
+                  }}
+                >
+                  <Feather name="send" size={16} color={theme.backgroundRoot} />
+                </Pressable>
+              ) : null}
+              <RecordingOrb
+                state={
+                  connectionState === "connecting" ? "connecting" :
+                  isRecording && isMuted ? "recording-muted" :
+                  isRecording ? "recording-unmuted" : "idle"
+                }
+                isMuted={isMuted}
+                isHoldActive={isHoldActive}
+                recordingTime={recordingTime}
+                onPress={handleMicPress}
+                onPressIn={handleMicPressIn}
+                onPressOut={handleMicPressOut}
+                onStartRecording={startRecording}
+                size="compact"
+                showLabels={false}
+              />
             </View>
-          ) : null}
+          </View>
+
         </View>
       )}
     </View>
@@ -929,6 +925,18 @@ const styles = StyleSheet.create({
   cancelText: {
     color: Colors.dark.textSecondary,
     fontSize: 14,
+  },
+  headerDoneButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+  },
+  headerDoneText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  headerDonePlaceholder: {
+    width: 60,
   },
   timerContainer: {
     flexDirection: "row",
@@ -969,13 +977,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   transcriptSection: {
-    flex: 1,
-    minHeight: 60,
+    maxHeight: 200,
     backgroundColor: Colors.dark.backgroundDefault,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.sm,
-    marginBottom: Spacing.md,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
     borderWidth: 1,
+    borderBottomWidth: 0,
     borderColor: Colors.dark.border,
   },
   inputRow: {

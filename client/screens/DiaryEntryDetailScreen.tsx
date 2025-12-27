@@ -507,6 +507,18 @@ export default function DiaryEntryDetailScreen() {
         <Pressable onPress={handleCancel} style={styles.cancelButton}>
           <ThemedText style={styles.cancelText}>{isRecording ? "Cancel" : "Back"}</ThemedText>
         </Pressable>
+        {isRecording || connectionState === "connecting" ? (
+          <Pressable
+            style={[styles.headerDoneButton, { backgroundColor: theme.accent }]}
+            onPress={stopRecording}
+          >
+            <ThemedText style={[styles.headerDoneText, { color: theme.backgroundRoot }]}>
+              Done
+            </ThemedText>
+          </Pressable>
+        ) : (
+          <ThemedText style={styles.dateHeader}>{dayName}</ThemedText>
+        )}
         <View style={styles.timerContainer}>
           {isRecording ? (
             <>
@@ -519,10 +531,9 @@ export default function DiaryEntryDetailScreen() {
               ) : null}
             </>
           ) : (
-            <ThemedText style={styles.dateHeader}>{dayName}</ThemedText>
+            <View style={{ width: 50 }} />
           )}
         </View>
-        <View style={{ width: 50 }} />
       </View>
 
       {isProcessing ? (
@@ -557,139 +568,124 @@ export default function DiaryEntryDetailScreen() {
               />
             </View>
 
-            <View style={styles.liveTranscriptSection}>
-              {(messages.length > 0 || displayMessages.length > 0) ? (
-                <ScrollView 
-                  style={styles.transcriptScrollWithOrb}
-                  contentContainerStyle={styles.transcriptScrollContent}
-                >
-                  {messages.length > 0 ? (
-                    messages.map((message) => (
-                      <View key={message.id} style={styles.messageContainer}>
-                        <View style={[
-                          styles.speakerBadge,
-                          message.speaker === "user" ? styles.userBadge : styles.aiBadge
-                        ]}>
-                          <Feather 
-                            name={message.speaker === "user" ? "user" : "cpu"} 
-                            size={10} 
-                            color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
-                          />
-                          <ThemedText style={[
-                            styles.speakerLabel,
-                            message.speaker === "user" ? styles.userLabel : styles.aiLabel
-                          ]}>
-                            {message.speaker === "user" ? "You" : "AI"}
-                          </ThemedText>
-                        </View>
-                        <ThemedText
-                          style={[
-                            styles.messageText,
-                            !message.isFinal && styles.messageStreaming,
-                          ]}
-                          fontFamily="serif"
-                        >
-                          {message.text}
-                          {!message.isFinal ? (
-                            <ThemedText style={styles.cursor}>|</ThemedText>
-                          ) : null}
-                        </ThemedText>
-                      </View>
-                    ))
-                  ) : (
-                    displayMessages.map((message) => (
-                      <View key={message.id} style={styles.messageContainer}>
-                        <View style={[
-                          styles.speakerBadge,
-                          message.speaker === "user" ? styles.userBadge : styles.aiBadge
-                        ]}>
-                          <Feather 
-                            name={message.speaker === "user" ? "user" : "cpu"} 
-                            size={10} 
-                            color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
-                          />
-                          <ThemedText style={[
-                            styles.speakerLabel,
-                            message.speaker === "user" ? styles.userLabel : styles.aiLabel
-                          ]}>
-                            {message.speaker === "user" ? "You" : "AI"}
-                          </ThemedText>
-                        </View>
-                        <ThemedText style={styles.messageText} fontFamily="serif">
-                          {message.text}
-                        </ThemedText>
-                      </View>
-                    ))
-                  )}
-                </ScrollView>
-              ) : null}
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[styles.textInputField, { color: theme.text }]}
-                  value={textInput}
-                  onChangeText={setTextInput}
-                  placeholder="Speak or type to update..."
-                  placeholderTextColor={theme.textTertiary}
-                  multiline
-                  blurOnSubmit={false}
-                />
-                {textInput.trim() ? (
-                  <Pressable
-                    style={[styles.sendButton, { backgroundColor: theme.accent }]}
-                    onPress={() => {
-                      if (textInput.trim()) {
-                        const newMessage: ConversationMessage = {
-                          id: Date.now().toString(),
-                          text: textInput.trim(),
-                          speaker: "user",
-                          isFinal: true,
-                          timestamp: Date.now(),
-                        };
-                        setMessages(prev => [...prev, newMessage]);
-                        setTranscript(prev => prev + (prev ? " " : "") + textInput.trim());
-                        setTextInput("");
-                      }
-                    }}
-                  >
-                    <Feather name="send" size={16} color={theme.backgroundRoot} />
-                  </Pressable>
-                ) : null}
-                <RecordingOrb
-                  state={
-                    connectionState === "connecting" ? "connecting" :
-                    isRecording && isMuted ? "recording-muted" :
-                    isRecording ? "recording-unmuted" : "idle"
-                  }
-                  isMuted={isMuted}
-                  isHoldActive={isHoldActive}
-                  recordingTime={recordingTime}
-                  onPress={handleMicPress}
-                  onPressIn={handleMicPressIn}
-                  onPressOut={handleMicPressOut}
-                  onStartRecording={startRecording}
-                  size="compact"
-                  showLabels={false}
-                />
-              </View>
-            </View>
           </ScrollView>
 
-          {isRecording || connectionState === "connecting" ? (
-            <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
-              <Pressable
-                style={[styles.actionButton, { backgroundColor: theme.accent }]}
-                onPress={stopRecording}
+          <View style={[styles.liveTranscriptSection, { paddingBottom: insets.bottom + Spacing.sm }]}>
+            {(messages.length > 0 || displayMessages.length > 0) ? (
+              <ScrollView 
+                style={styles.transcriptScrollWithOrb}
+                contentContainerStyle={styles.transcriptScrollContent}
               >
-                <View style={styles.actionButtonContent}>
-                  <View style={[styles.doneIndicatorGreen, { backgroundColor: theme.success }]} />
-                  <View style={[styles.doneIndicatorYellow, { backgroundColor: theme.warning }]} />
-                  <ThemedText style={[styles.actionButtonText, { color: theme.backgroundRoot }]}>
-                    Done
-                  </ThemedText>
-                </View>
-              </Pressable>
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <View key={message.id} style={styles.messageContainer}>
+                      <View style={[
+                        styles.speakerBadge,
+                        message.speaker === "user" ? styles.userBadge : styles.aiBadge
+                      ]}>
+                        <Feather 
+                          name={message.speaker === "user" ? "user" : "cpu"} 
+                          size={10} 
+                          color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
+                        />
+                        <ThemedText style={[
+                          styles.speakerLabel,
+                          message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                        ]}>
+                          {message.speaker === "user" ? "You" : "AI"}
+                        </ThemedText>
+                      </View>
+                      <ThemedText
+                        style={[
+                          styles.messageText,
+                          !message.isFinal && styles.messageStreaming,
+                        ]}
+                        fontFamily="serif"
+                      >
+                        {message.text}
+                        {!message.isFinal ? (
+                          <ThemedText style={styles.cursor}>|</ThemedText>
+                        ) : null}
+                      </ThemedText>
+                    </View>
+                  ))
+                ) : (
+                  displayMessages.map((message) => (
+                    <View key={message.id} style={styles.messageContainer}>
+                      <View style={[
+                        styles.speakerBadge,
+                        message.speaker === "user" ? styles.userBadge : styles.aiBadge
+                      ]}>
+                        <Feather 
+                          name={message.speaker === "user" ? "user" : "cpu"} 
+                          size={10} 
+                          color={message.speaker === "user" ? theme.accent : theme.accentSecondary} 
+                        />
+                        <ThemedText style={[
+                          styles.speakerLabel,
+                          message.speaker === "user" ? styles.userLabel : styles.aiLabel
+                        ]}>
+                          {message.speaker === "user" ? "You" : "AI"}
+                        </ThemedText>
+                      </View>
+                      <ThemedText style={styles.messageText} fontFamily="serif">
+                        {message.text}
+                      </ThemedText>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            ) : null}
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.textInputField, { color: theme.text }]}
+                value={textInput}
+                onChangeText={setTextInput}
+                placeholder="Speak or type to update..."
+                placeholderTextColor={theme.textTertiary}
+                multiline
+                blurOnSubmit={false}
+              />
+              {textInput.trim() ? (
+                <Pressable
+                  style={[styles.sendButton, { backgroundColor: theme.accent }]}
+                  onPress={() => {
+                    if (textInput.trim()) {
+                      const newMessage: ConversationMessage = {
+                        id: Date.now().toString(),
+                        text: textInput.trim(),
+                        speaker: "user",
+                        isFinal: true,
+                        timestamp: Date.now(),
+                      };
+                      setMessages(prev => [...prev, newMessage]);
+                      setTranscript(prev => prev + (prev ? " " : "") + textInput.trim());
+                      setTextInput("");
+                    }
+                  }}
+                >
+                  <Feather name="send" size={16} color={theme.backgroundRoot} />
+                </Pressable>
+              ) : null}
+              <RecordingOrb
+                state={
+                  connectionState === "connecting" ? "connecting" :
+                  isRecording && isMuted ? "recording-muted" :
+                  isRecording ? "recording-unmuted" : "idle"
+                }
+                isMuted={isMuted}
+                isHoldActive={isHoldActive}
+                recordingTime={recordingTime}
+                onPress={handleMicPress}
+                onPressIn={handleMicPressIn}
+                onPressOut={handleMicPressOut}
+                onStartRecording={startRecording}
+                size="compact"
+                showLabels={false}
+              />
             </View>
-          ) : null}
+          </View>
+
         </View>
       )}
     </View>
@@ -714,6 +710,15 @@ const styles = StyleSheet.create({
   cancelText: {
     color: Colors.dark.textSecondary,
     fontSize: 14,
+  },
+  headerDoneButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+  },
+  headerDoneText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   dateHeader: {
     color: Colors.dark.text,
@@ -768,11 +773,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.border,
   },
   liveTranscriptSection: {
-    flex: 1,
-    minHeight: 60,
+    maxHeight: 200,
     backgroundColor: Colors.dark.backgroundDefault,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.sm,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
     marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.dark.border,
