@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Platform,
   TextInput,
-  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -780,11 +779,7 @@ export default function RecordingScreen() {
           </ThemedText>
         </View>
       ) : (
-        <KeyboardAvoidingView 
-          style={styles.content}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={insets.top + 60}
-        >
+        <View style={styles.content}>
           <ScrollView
             style={styles.mainScrollView}
             contentContainerStyle={[
@@ -907,7 +902,7 @@ export default function RecordingScreen() {
               />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       )}
     </View>
   );
