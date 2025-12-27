@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -89,6 +90,7 @@ export default function RecordingScreen() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [textInput, setTextInput] = useState("");
   const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "connected" | "disconnected" | "error">("idle");
   const [cardData, setCardData] = useState<DiaryCardData>(emptyCardData);
   const [glowingFields, setGlowingFields] = useState<Set<string>>(new Set());
@@ -793,17 +795,17 @@ export default function RecordingScreen() {
             ) : null}
 
             <View style={styles.transcriptSection}>
-              <ScrollView
-                ref={scrollViewRef}
-                style={styles.transcriptScroll}
-                contentContainerStyle={styles.transcriptScrollContent}
-                nestedScrollEnabled={true}
-                onContentSizeChange={() =>
-                  scrollViewRef.current?.scrollToEnd({ animated: true })
-                }
-              >
-                {messages.length > 0 ? (
-                  messages.map((message) => (
+              {messages.length > 0 ? (
+                <ScrollView
+                  ref={scrollViewRef}
+                  style={styles.transcriptScroll}
+                  contentContainerStyle={styles.transcriptScrollContent}
+                  nestedScrollEnabled={true}
+                  onContentSizeChange={() =>
+                    scrollViewRef.current?.scrollToEnd({ animated: true })
+                  }
+                >
+                  {messages.map((message) => (
                     <View key={message.id} style={styles.messageContainer}>
                       <View style={[
                         styles.speakerBadge,
@@ -834,14 +836,40 @@ export default function RecordingScreen() {
                         ) : null}
                       </ThemedText>
                     </View>
-                  ))
-                ) : (
-                  <ThemedText style={[styles.transcript, styles.transcriptPlaceholder]} fontFamily="serif">
-                    Speak about your day...
-                  </ThemedText>
-                )}
-              </ScrollView>
-              <View style={styles.transcriptOrbContainer}>
+                  ))}
+                </ScrollView>
+              ) : null}
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={[styles.textInputField, { color: theme.text }]}
+                  value={textInput}
+                  onChangeText={setTextInput}
+                  placeholder="Speak or type about your day..."
+                  placeholderTextColor={theme.textTertiary}
+                  multiline
+                  blurOnSubmit={false}
+                />
+                {textInput.trim() ? (
+                  <Pressable
+                    style={[styles.sendButton, { backgroundColor: theme.accent }]}
+                    onPress={() => {
+                      if (textInput.trim()) {
+                        const newMessage: ConversationMessage = {
+                          id: Date.now().toString(),
+                          text: textInput.trim(),
+                          speaker: "user",
+                          isFinal: true,
+                          timestamp: Date.now(),
+                        };
+                        setMessages(prev => [...prev, newMessage]);
+                        setTranscript(prev => prev + (prev ? " " : "") + textInput.trim());
+                        setTextInput("");
+                      }
+                    }}
+                  >
+                    <Feather name="send" size={16} color={theme.backgroundRoot} />
+                  </Pressable>
+                ) : null}
                 <RecordingOrb
                   state={
                     connectionState === "connecting" ? "connecting" :
@@ -862,8 +890,8 @@ export default function RecordingScreen() {
             </View>
           </ScrollView>
 
-          <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
-            {isRecording || connectionState === "connecting" ? (
+          {isRecording || connectionState === "connecting" ? (
+            <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
               <Pressable
                 style={[styles.actionButton, { backgroundColor: theme.accent }]}
                 onPress={stopRecording}
@@ -876,20 +904,8 @@ export default function RecordingScreen() {
                   </ThemedText>
                 </View>
               </Pressable>
-            ) : (
-              <Pressable
-                style={[styles.actionButton, { backgroundColor: theme.backgroundTertiary }]}
-                onPress={startRecording}
-              >
-                <View style={styles.actionButtonContent}>
-                  <Feather name="mic" size={18} color={theme.text} />
-                  <ThemedText style={styles.actionButtonText}>
-                    Start Recording
-                  </ThemedText>
-                </View>
-              </Pressable>
-            )}
-          </View>
+            </View>
+          ) : null}
         </View>
       )}
     </View>
@@ -961,6 +977,26 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.dark.border,
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  textInputField: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "System",
+    minHeight: 36,
+    maxHeight: 80,
+    paddingVertical: Spacing.xs,
+  },
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
   transcriptScroll: {
     flex: 1,

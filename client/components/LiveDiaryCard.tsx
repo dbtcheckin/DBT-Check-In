@@ -337,25 +337,30 @@ export default function LiveDiaryCard({
 
       <View style={styles.divider} />
 
-      <View style={styles.skillsSection}>
-        <ThemedText style={styles.sectionTitle}>Skills Checklist</ThemedText>
-        {Object.entries(SKILLS).map(([module, skillIds]) => (
-          <View key={module} style={styles.skillModule}>
-            <ThemedText style={styles.skillModuleLabel}>
-              {module.replace(/_/g, " ")}
-            </ThemedText>
-            <View style={styles.skillDots}>
-              {skillIds.map((skillId) => (
-                <SkillDot
-                  key={skillId}
-                  used={data.skills[skillId]?.used || false}
-                  isGlowing={glowingFields.has(`skills.${skillId}`)}
-                />
-              ))}
+      <Accordion 
+        title="Skills Checklist" 
+        defaultExpanded={false}
+        titleStyle={styles.sectionTitle}
+      >
+        <View style={styles.skillsContent}>
+          {Object.entries(SKILLS).map(([module, skillIds]) => (
+            <View key={module} style={styles.skillModule}>
+              <ThemedText style={styles.skillModuleLabel}>
+                {module.replace(/_/g, " ")}
+              </ThemedText>
+              <View style={styles.skillDots}>
+                {skillIds.map((skillId) => (
+                  <SkillDot
+                    key={skillId}
+                    used={data.skills[skillId]?.used || false}
+                    isGlowing={glowingFields.has(`skills.${skillId}`)}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      </Accordion>
 
       <View style={styles.divider} />
 
@@ -674,6 +679,9 @@ const styles = StyleSheet.create({
   },
   skillsSection: {
     marginTop: 0,
+  },
+  skillsContent: {
+    paddingTop: Spacing.xs,
   },
   skillModule: {
     marginBottom: 8,
