@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, Pressable, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Platform, ViewStyle } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -29,6 +29,9 @@ interface RecordingOrbProps {
   onPressOut: () => void;
   onStartRecording?: () => void;
   onStopRecording?: () => void;
+  size?: "large" | "compact";
+  showLabels?: boolean;
+  style?: ViewStyle;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -43,8 +46,18 @@ export function RecordingOrb({
   onPressOut,
   onStartRecording,
   onStopRecording,
+  size = "large",
+  showLabels = true,
+  style,
 }: RecordingOrbProps) {
   const theme = Colors.dark;
+  
+  const isCompact = size === "compact";
+  const baseSize = isCompact ? 52 : 120;
+  const wrapperSize = isCompact ? 64 : 160;
+  const iconSize = isCompact ? 24 : 48;
+  const glowSize = isCompact ? 64 : 160;
+  const ringSize = isCompact ? 56 : 140;
   
   const breathScale = useSharedValue(1);
   const glowOpacity = useSharedValue(0.3);
@@ -127,11 +140,11 @@ export function RecordingOrb({
   }, [isHoldActive]);
 
   useEffect(() => {
-    if (isUnmuted && isRecording) {
+    if (isRecording && isUnmuted && !isHoldActive) {
       pulseRingScale.value = withRepeat(
         withSequence(
           withTiming(1.3, { duration: 1500 }),
-          withTiming(1, { duration: 0 })
+          withTiming(1.1, { duration: 0 })
         ),
         -1
       );
@@ -207,17 +220,51 @@ export function RecordingOrb({
     return "Release to pause, tap to toggle";
   };
 
+  const dynamicStyles = {
+    orbWrapper: {
+      width: wrapperSize,
+      height: wrapperSize,
+    },
+    glowRing: {
+      width: glowSize,
+      height: glowSize,
+      borderRadius: glowSize / 2,
+    },
+    pulseRing: {
+      width: ringSize,
+      height: ringSize,
+      borderRadius: ringSize / 2,
+      borderWidth: isCompact ? 1 : 2,
+    },
+    holdRing: {
+      width: ringSize,
+      height: ringSize,
+      borderRadius: ringSize / 2,
+      borderWidth: isCompact ? 2 : 3,
+    },
+    orb: {
+      width: baseSize,
+      height: baseSize,
+      borderRadius: baseSize / 2,
+    },
+    loadingDot: {
+      width: isCompact ? 6 : 10,
+      height: isCompact ? 6 : 10,
+      borderRadius: isCompact ? 3 : 5,
+    },
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.orbWrapper}>
-        <Animated.View style={[styles.glowRing, glowStyle, { backgroundColor: theme.accent }]} />
+    <View style={[isCompact ? styles.containerCompact : styles.container, style]}>
+      <View style={[styles.orbWrapper, dynamicStyles.orbWrapper]}>
+        <Animated.View style={[styles.glowRing, dynamicStyles.glowRing, glowStyle, { backgroundColor: theme.accent }]} />
         
-        <Animated.View style={[styles.pulseRing, pulseRingStyle, { borderColor: theme.accent }]} />
+        <Animated.View style={[styles.pulseRing, dynamicStyles.pulseRing, pulseRingStyle, { borderColor: theme.accent }]} />
         
-        <Animated.View style={[styles.holdRing, holdRingStyle, { borderColor: theme.accent }]} />
+        <Animated.View style={[styles.holdRing, dynamicStyles.holdRing, holdRingStyle, { borderColor: theme.accent }]} />
         
         <AnimatedPressable
-          style={[styles.orb, orbStyle, { backgroundColor: getOrbBackground() }]}
+          style={[styles.orb, dynamicStyles.orb, orbStyle, { backgroundColor: getOrbBackground() }]}
           onPress={state === "idle" && onStartRecording ? onStartRecording : (isRecording ? onPress : undefined)}
           onPressIn={isRecording ? onPressIn : undefined}
           onPressOut={isRecording ? onPressOut : undefined}
@@ -225,25 +272,25 @@ export function RecordingOrb({
         >
           {state === "processing" || state === "connecting" ? (
             <View style={styles.iconContainer}>
-              <Animated.View style={styles.loadingDots}>
-                <View style={[styles.loadingDot, { backgroundColor: theme.accent }]} />
-                <View style={[styles.loadingDot, { backgroundColor: theme.accent, opacity: 0.6 }]} />
-                <View style={[styles.loadingDot, { backgroundColor: theme.accent, opacity: 0.3 }]} />
+              <Animated.View style={[styles.loadingDots, isCompact && { gap: 4 }]}>
+                <View style={[dynamicStyles.loadingDot, { backgroundColor: theme.accent }]} />
+                <View style={[dynamicStyles.loadingDot, { backgroundColor: theme.accent, opacity: 0.6 }]} />
+                <View style={[dynamicStyles.loadingDot, { backgroundColor: theme.accent, opacity: 0.3 }]} />
               </Animated.View>
             </View>
           ) : isRecording && !isUnmuted ? (
             <View style={styles.iconContainer}>
-              <Feather name="mic-off" size={48} color={getIconColor()} />
+              <Feather name="mic-off" size={iconSize} color={getIconColor()} />
             </View>
           ) : (
             <View style={styles.iconContainer}>
-              <Feather name="mic" size={48} color={getIconColor()} />
+              <Feather name="mic" size={iconSize} color={getIconColor()} />
             </View>
           )}
         </AnimatedPressable>
       </View>
 
-      {isRecording ? (
+      {!isCompact && isRecording ? (
         <View style={styles.timerContainer}>
           <View style={[styles.recordingDot, { backgroundColor: isUnmuted ? theme.danger : theme.textTertiary }]} />
           <ThemedText style={styles.timerText} fontFamily="mono">
@@ -252,12 +299,14 @@ export function RecordingOrb({
         </View>
       ) : null}
 
-      <View style={styles.statusContainer}>
-        <ThemedText style={styles.statusText}>{getStatusText()}</ThemedText>
-        <ThemedText style={styles.hintText}>{getHintText()}</ThemedText>
-      </View>
+      {!isCompact && showLabels ? (
+        <View style={styles.statusContainer}>
+          <ThemedText style={styles.statusText}>{getStatusText()}</ThemedText>
+          <ThemedText style={styles.hintText}>{getHintText()}</ThemedText>
+        </View>
+      ) : null}
 
-      {isRecording || state === "connecting" ? (
+      {!isCompact && (isRecording || state === "connecting") ? (
         <Pressable
           style={[styles.doneButton, { backgroundColor: theme.accent }]}
           onPress={onStopRecording}
@@ -281,50 +330,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: Spacing.xl,
   },
+  containerCompact: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   orbWrapper: {
-    width: 160,
-    height: 160,
     alignItems: "center",
     justifyContent: "center",
   },
   glowRing: {
     position: "absolute",
-    width: 160,
-    height: 160,
-    borderRadius: 80,
   },
   pulseRing: {
     position: "absolute",
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 2,
   },
   holdRing: {
     position: "absolute",
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 3,
   },
   orb: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
     alignItems: "center",
     justifyContent: "center",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 12,
+        elevation: 8,
       },
       web: {
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
       },
     }),
   },
@@ -335,11 +372,6 @@ const styles = StyleSheet.create({
   loadingDots: {
     flexDirection: "row",
     gap: 6,
-  },
-  loadingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
   timerContainer: {
     flexDirection: "row",

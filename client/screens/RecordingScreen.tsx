@@ -770,7 +770,7 @@ export default function RecordingScreen() {
             style={styles.mainScrollView}
             contentContainerStyle={[
               styles.mainScrollContent,
-              { paddingBottom: 80 + insets.bottom }
+              { paddingBottom: Spacing.md }
             ]}
             showsVerticalScrollIndicator={true}
           >
@@ -796,6 +796,7 @@ export default function RecordingScreen() {
               <ScrollView
                 ref={scrollViewRef}
                 style={styles.transcriptScroll}
+                contentContainerStyle={styles.transcriptScrollContent}
                 nestedScrollEnabled={true}
                 onContentSizeChange={() =>
                   scrollViewRef.current?.scrollToEnd({ animated: true })
@@ -840,25 +841,54 @@ export default function RecordingScreen() {
                   </ThemedText>
                 )}
               </ScrollView>
+              <View style={styles.transcriptOrbContainer}>
+                <RecordingOrb
+                  state={
+                    connectionState === "connecting" ? "connecting" :
+                    isRecording && isMuted ? "recording-muted" :
+                    isRecording ? "recording-unmuted" : "idle"
+                  }
+                  isMuted={isMuted}
+                  isHoldActive={isHoldActive}
+                  recordingTime={recordingTime}
+                  onPress={handleMicPress}
+                  onPressIn={handleMicPressIn}
+                  onPressOut={handleMicPressOut}
+                  onStartRecording={startRecording}
+                  size="compact"
+                  showLabels={false}
+                />
+              </View>
             </View>
           </ScrollView>
 
-          <View style={[styles.footer, { bottom: insets.bottom + Spacing.md }]}>
-            <RecordingOrb
-              state={
-                connectionState === "connecting" ? "connecting" :
-                isRecording && isMuted ? "recording-muted" :
-                isRecording ? "recording-unmuted" : "idle"
-              }
-              isMuted={isMuted}
-              isHoldActive={isHoldActive}
-              recordingTime={recordingTime}
-              onPress={handleMicPress}
-              onPressIn={handleMicPressIn}
-              onPressOut={handleMicPressOut}
-              onStartRecording={startRecording}
-              onStopRecording={stopRecording}
-            />
+          <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.md }]}>
+            {isRecording || connectionState === "connecting" ? (
+              <Pressable
+                style={[styles.actionButton, { backgroundColor: theme.accent }]}
+                onPress={stopRecording}
+              >
+                <View style={styles.actionButtonContent}>
+                  <View style={[styles.doneIndicatorGreen, { backgroundColor: theme.success }]} />
+                  <View style={[styles.doneIndicatorYellow, { backgroundColor: theme.warning }]} />
+                  <ThemedText style={[styles.actionButtonText, { color: theme.backgroundRoot }]}>
+                    Done
+                  </ThemedText>
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                style={[styles.actionButton, { backgroundColor: theme.backgroundTertiary }]}
+                onPress={startRecording}
+              >
+                <View style={styles.actionButtonContent}>
+                  <Feather name="mic" size={18} color={theme.text} />
+                  <ThemedText style={styles.actionButtonText}>
+                    Start Recording
+                  </ThemedText>
+                </View>
+              </Pressable>
+            )}
           </View>
         </View>
       )}
@@ -934,6 +964,15 @@ const styles = StyleSheet.create({
   },
   transcriptScroll: {
     flex: 1,
+    paddingRight: 60,
+  },
+  transcriptScrollContent: {
+    paddingBottom: Spacing.sm,
+  },
+  transcriptOrbContainer: {
+    position: "absolute",
+    right: Spacing.xs,
+    bottom: Spacing.xs,
   },
   transcript: {
     color: Colors.dark.text,
@@ -982,12 +1021,36 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   footer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
     paddingTop: Spacing.sm,
-    alignItems: "center",
+    paddingHorizontal: 14,
     backgroundColor: Colors.dark.backgroundRoot,
+  },
+  actionButton: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    width: "100%",
+  },
+  actionButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  actionButtonText: {
+    color: Colors.dark.text,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  doneIndicatorGreen: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  doneIndicatorYellow: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   doneButton: {
     backgroundColor: Colors.dark.backgroundTertiary,
