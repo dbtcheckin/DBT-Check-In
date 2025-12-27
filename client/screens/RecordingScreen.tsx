@@ -22,6 +22,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThemedText } from "@/components/ThemedText";
 import LiveDiaryCard, { DiaryCardData } from "@/components/LiveDiaryCard";
 import { SimulationIndicator } from "@/components/SimulationIndicator";
+import { RecordingOrb } from "@/components/RecordingOrb";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { apiRequest } from "@/lib/query-client";
 import { useSimulatedWebRTC } from "@/hooks/useSimulatedWebRTC";
@@ -843,49 +844,21 @@ export default function RecordingScreen() {
           </ScrollView>
 
           <View style={[styles.footer, { bottom: insets.bottom + Spacing.md }]}>
-            {isRecording ? (
-              <Pressable
-                onPressIn={handleMicPressIn}
-                onPressOut={handleMicPressOut}
-                onPress={handleMicPress}
-                style={({ pressed }) => [
-                  styles.muteButton,
-                  isMuted && styles.muteButtonActive,
-                  (pressed || isHoldActive) && styles.muteButtonPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={isMuted ? "Hold to speak, release to mute" : "Microphone active, tap or release to mute"}
-              >
-                <Feather name={isMuted ? "mic-off" : "mic"} size={20} color={isMuted ? theme.danger : theme.text} />
-              </Pressable>
-            ) : null}
-            <Pressable
-              onPress={isRecording ? stopRecording : startRecording}
-              disabled={connectionState === "connecting"}
-              style={({ pressed }) => [
-                styles.doneButton,
-                pressed && styles.doneButtonPressed,
-                connectionState === "connecting" && styles.doneButtonDisabled,
-              ]}
-            >
-              {connectionState === "connecting" ? (
-                <View style={styles.doneButtonContent}>
-                  <ActivityIndicator size="small" color={theme.text} />
-                  <ThemedText style={styles.doneButtonText}>Connecting...</ThemedText>
-                </View>
-              ) : isRecording ? (
-                <View style={styles.doneButtonContent}>
-                  <View style={styles.connectedIndicator} />
-                  <View style={styles.stopSquare} />
-                  <ThemedText style={styles.doneButtonText}>Done</ThemedText>
-                </View>
-              ) : (
-                <View style={styles.doneButtonContent}>
-                  <Feather name="mic" size={18} color={theme.text} />
-                  <ThemedText style={styles.doneButtonText}>Start Recording</ThemedText>
-                </View>
-              )}
-            </Pressable>
+            <RecordingOrb
+              state={
+                connectionState === "connecting" ? "connecting" :
+                isRecording && isMuted ? "recording-muted" :
+                isRecording ? "recording-unmuted" : "idle"
+              }
+              isMuted={isMuted}
+              isHoldActive={isHoldActive}
+              recordingTime={recordingTime}
+              onPress={handleMicPress}
+              onPressIn={handleMicPressIn}
+              onPressOut={handleMicPressOut}
+              onStartRecording={startRecording}
+              onStopRecording={stopRecording}
+            />
           </View>
         </View>
       )}
@@ -1010,9 +983,11 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    left: 14,
-    right: 14,
+    left: 0,
+    right: 0,
     paddingTop: Spacing.sm,
+    alignItems: "center",
+    backgroundColor: Colors.dark.backgroundRoot,
   },
   doneButton: {
     backgroundColor: Colors.dark.backgroundTertiary,
