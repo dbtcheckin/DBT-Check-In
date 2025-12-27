@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
   },
   textInputField: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: "System",
     minHeight: 36,
     maxHeight: 80,
