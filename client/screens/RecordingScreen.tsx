@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Platform,
   TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -779,7 +780,11 @@ export default function RecordingScreen() {
           </ThemedText>
         </View>
       ) : (
-        <View style={styles.content}>
+        <KeyboardAvoidingView 
+          style={styles.content}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 60}
+        >
           <ScrollView
             style={styles.mainScrollView}
             contentContainerStyle={[
@@ -787,6 +792,7 @@ export default function RecordingScreen() {
               { paddingBottom: Spacing.md }
             ]}
             showsVerticalScrollIndicator={true}
+            keyboardShouldPersistTaps="handled"
           >
             <View style={styles.cardContainer}>
               <LiveDiaryCard
@@ -901,8 +907,7 @@ export default function RecordingScreen() {
               />
             </View>
           </View>
-
-        </View>
+        </KeyboardAvoidingView>
       )}
     </View>
   );

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Platform,
   TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -544,11 +545,16 @@ export default function DiaryEntryDetailScreen() {
           </ThemedText>
         </View>
       ) : (
-        <View style={styles.content}>
+        <KeyboardAvoidingView 
+          style={styles.content}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={insets.top + 60}
+        >
           <ScrollView 
             ref={scrollViewRef}
             style={styles.scrollContent}
             contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
           >
             {simulationState?.active || simulationState?.mode === "debrief" ? (
               <SimulationIndicator state={simulationState} />
@@ -685,8 +691,7 @@ export default function DiaryEntryDetailScreen() {
               />
             </View>
           </View>
-
-        </View>
+        </KeyboardAvoidingView>
       )}
     </View>
   );
